@@ -2,6 +2,8 @@
 
 Your daily operating system for turning content into a creator business — multi-tenant, account-scoped, and ready to deploy.
 
+IF YOU ARE A CREATOR, SEE: docs/CREATOR_GUIDE.md
+
 ## The rule this product is built on
 
 Every recommendation, answer, and number comes from a record the creator owns. The

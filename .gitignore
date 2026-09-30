@@ -1,8 +1,53 @@
+# --- secrets and local configuration (NEVER commit) ---------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_ed25519
+credentials.json
+secrets.yaml
+secrets.yml
+
+# --- local databases ----------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+
+# --- python ------------------------------------------------------------------
 __pycache__/
 *.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
 .venv/
 venv/
-.env
-*.db
+env/
+.mypy_cache/
+.ruff_cache/
 .pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# --- editors and OS ----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# --- logs and local scratch --------------------------------------------------
+*.log
+*.tmp
+*.bak
+*.orig

@@ -2,7 +2,7 @@
 
 Your daily operating system for turning content into a creator business — multi-tenant, account-scoped, and ready to deploy.
 
-IF YOU ARE A CREATOR, SEE: docs/CREATOR_GUIDE.md
+IF YOU ARE A CREATOR, SEE: [docs/CREATOR_GUIDE.md](https://github.com/atharvap35/creatorOS/blob/main/docs/CREATOR_GUIDE.md)
 
 ## The rule this product is built on
 

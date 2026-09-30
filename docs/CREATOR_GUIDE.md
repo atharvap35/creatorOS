@@ -354,6 +354,11 @@ date, which is what makes "overdue by N days" possible in the Attention Center.
 What each deliverable costs you, with three price points so you can negotiate a range.
 This is *your* number, not a market benchmark.
 
+A rate card starts empty and is yours to fill in. Here it is with four real formats
+behind it:
+
+![Rate card with content](screenshots/55-beyounick-rate-card.png)
+
 **Marking a payment received is a one-click action**, and the Attention Center's
 `USD 6,000 invoiced but not recorded as received` item exists precisely to catch the
 case where you forgot.
@@ -428,6 +433,10 @@ A chronological record of real activity, grouped by day.
 Only real mutations appear. Drafting a message creates no timeline entry, because it
 changes nothing.
 
+With a real publication history behind it:
+
+![Timeline with content](screenshots/57-beyounick-timeline.png)
+
 ---
 
 ## 15. Library, calendar, assistant, search
@@ -435,6 +444,10 @@ changes nothing.
 **Library** — your reusable assets, templates, and briefs.
 
 ![Library](screenshots/29-library.png)
+
+Populated with hooks, outlines and briefs:
+
+![Library with content](screenshots/56-beyounick-library.png)
 
 **Calendar** — everything with a date, in one month view.
 
@@ -491,6 +504,14 @@ you up.
 planning your week — asks first and waits for "yes" or a click. Anything that only
 reads — clearing your day, checking your week — runs straight away, because it changes
 nothing.
+
+Listening, then the refusal, then the confirmation prompt:
+
+![Voice listening](screenshots/49-voice-listening.png)
+
+![Voice refusing](screenshots/51-voice-refusal.png)
+
+![Voice confirming](screenshots/52-voice-confirm.png)
 
 **The numbers you hear are yours.** Voice does not calculate, rank, or estimate. It
 calls the same handler the button beside it calls, and reads back what that handler
@@ -610,7 +631,43 @@ stuck, Weekly review every Friday, Business review monthly.
 
 ---
 
-## 20. Screen reference
+## 20. A second workspace, built from a real channel
+
+Everything above uses the standard demo workspace. This section shows a different one —
+`beyounick` — whose content came from a **real public YouTube channel feed**, so you can
+see the same screens with genuine history in them rather than a tidy fiction.
+
+**What is real.** The 15 published videos, their titles, dates, descriptions and view
+counts were read from the channel's own public RSS feed. The series (*The Influencer
+Agency*, episodes 1–5), its weekly Thursday 7pm cadence, and the Fevikwik sponsorship
+are all quoted from the creators' own video descriptions.
+
+**What is a placeholder.** Every figure involving money — deal values, offer prices,
+revenue, rate-card pricing, the monthly target — is illustrative. A creator's rates are
+not public, and inventing plausible ones would defeat the point of this product.
+
+**What is deliberately absent.** Instagram returned a login wall and yielded nothing, so
+no Instagram data was invented. The hooks in the Library are the creators' actual wording
+from their video descriptions.
+
+![beyounick Today](screenshots/53-beyounick-today.png)
+
+![beyounick Content](screenshots/54-beyounick-content.png)
+
+Revenue sources are grouped from the creator's own received revenue, with a real count
+per source:
+
+![beyounick Money](screenshots/58-beyounick-money.png)
+
+![beyounick Deals](screenshots/59-beyounick-deals.png)
+
+You can rebuild this workspace from scratch with `python seed_beyounick.py`. It is
+idempotent: it refuses to run twice, and it will finish a partially-created account
+rather than leaving a half-built workspace behind.
+
+---
+
+## 21. Screen reference
 
 | Screen | Route | What it is for |
 | --- | --- | --- |

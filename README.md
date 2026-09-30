@@ -203,12 +203,13 @@ never be more capable — or more inventive — than the typed one.
 
 ## Documentation
 
-[`docs/CREATOR_GUIDE.md`](docs/CREATOR_GUIDE.md) is the end-user walkthrough: 20 sections
-covering every screen, with 52 screenshots of the running application in
+[`docs/CREATOR_GUIDE.md`](docs/CREATOR_GUIDE.md) is the end-user walkthrough: 21 sections
+covering every screen, with 59 screenshots of the running application in
 `docs/screenshots/`. It includes a grounded copilot answer, an honest refusal, a proposed
 week awaiting acceptance, a generated follow-up draft, 21 atoms extracted offline from
-a single published piece, and the voice dock listening, answering, refusing, and asking
-for confirmation before it changes anything.
+a single published piece, the voice dock listening, answering, refusing, and asking for
+confirmation before it changes anything, and a second workspace built from a real public
+YouTube channel feed.
 
 Regenerate it with a seeded demo workspace:
 
@@ -218,6 +219,19 @@ python -m uvicorn app.main:app --port 8077
 python capture.py                      # every screen  -> docs/screenshots/
 python capture_states.py               # working states -> docs/screenshots/
 ```
+
+A second workspace, `beyounick`, is built from a real public YouTube channel feed:
+
+```bash
+python seed_beyounick.py               # 62 records, idempotent
+python -m uvicorn app.main:app --port 8078
+python capture_beyounick.py            # that workspace -> docs/screenshots/
+```
+
+Its 15 published videos, series, and sponsor are real, read from the channel's own
+public RSS feed; every figure involving money is a labelled placeholder, because
+creator rates are not public. Instagram returned a login wall and yielded nothing, so
+no Instagram data was invented.
 
 ## Currency
 
@@ -259,7 +273,7 @@ nonsensical capacity figure or a crash.
 pytest -q
 ```
 
-98 tests across four files. The suite is slow by design: password hashing uses PBKDF2
+100 tests across four files. The suite is slow by design: password hashing uses PBKDF2
 at production cost, and each test rebuilds the whole schema. That cost is not lowered
 for test speed.
 
@@ -280,7 +294,12 @@ for test speed.
   and dismisses without scheduling anything before acceptance; capacity is computed
   from the creator's own working rhythm rather than any hard-coded constant; and the
   JSON action endpoint voice posts to returns the same result as the button, refuses
-  unknown slugs, rejects anonymous callers, and stays scoped to one account.
+  unknown slugs, rejects anonymous callers, and stays scoped to one account. Two more
+  tests pin the revenue source mix: every grouped source returns a real integer count,
+  and the shares sum to a full 100. The first exists because an unlabelled
+  `func.count` is named `count_1` internally, so reading it as `row.count` fell through
+  to a Row class-level accessor and rendered a repr of a bound method — literally
+  `Sponsorship (<function Row._special_name_accessor...>)` — in the page.
 - `tests/test_voice_browser.py` — the voice dock in a real browser: one press opens
   exactly one recognition session and it is never restarted, the microphone is released
   when speech arrives, interim words appear live, `no-speech` offers the typing box

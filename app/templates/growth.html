@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Growth{% endblock %}
+{% block page_id %}growth{% endblock %}
+{% block breadcrumb %}Growth{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Is this actually working?</p><h1>Growth & health</h1><p class="page-subtitle">Five sections scored from your own records. Every score shows the evidence behind it.</p></div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/growth/opportunities">Opportunity radar</a>
+        <a class="btn ghost small" href="/reviews/monthly">Monthly review</a>
+    </div>
+</header>
+
+<section class="hero" style="margin-bottom:22px">
+    <div>
+        <p class="eyebrow">Overall</p>
+        <div class="stat-value">{{ health.overall }}<small style="font-size:14px">/100</small></div>
+        <p class="page-subtitle">Weakest area: <strong>{{ health.weakest.key }}</strong> — {{ health.weakest.action }}</p>
+    </div>
+    <div class="health-bars">
+        {% for s in sections %}
+        <div class="health-bar">
+            <span class="health-bar-label">{{ s.key|title }} <em>{{ s.state_label }}</em></span>
+            <div class="meter"><span class="{{ s.state_style }}" style="width: {{ s.score }}%"></span></div>
+            <span class="health-bar-score">{{ s.score }}</span>
+            <small class="section-note">{{ s.why }}</small>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="dashboard-sections">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Publishing consistency</h2><span class="section-note">last 8 weeks</span></div>
+        <div class="week-strip">
+            {% for w in consistency.weeks %}
+            <div class="week-col">
+                <div class="week-bar" style="height: {{ [4, (w.count * 14 + 4)]|min }}px" title="{{ w.count }} published"></div>
+                <small>{{ w.label }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="breakdown" style="margin-top:14px">
+            <div class="breakdown-row"><span>Weeks with a publish</span><strong>{{ consistency.active_weeks }} of {{ consistency.total|default(8) }}</strong></div>
+            <div class="breakdown-row"><span>Average per active week</span><strong>{{ consistency.average_per_active_week }}</strong></div>
+        </div>
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Revenue by source</h2><a class="link" href="/money">Money centre</a></div>
+        {% if sources %}
+        <div class="breakdown">
+            {% for s in sources %}
+            <div class="breakdown-row"><span>{{ s.source|replace('_',' ')|title }} ({{ s.count }})</span><strong>{{ money(s.total) }} · {{ s.share }}%</strong></div>
+            <div class="meter"><span style="width: {{ s.share }}%"></span></div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-note">No received revenue recorded yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Content mix</h2><a class="link" href="/content/pillars">Pillars</a></div>
+        {% if mix %}
+        <div class="two-col-list">
+            {% for row in mix %}
+            <div class="mini-row">
+                <div><strong>{{ row.pillar.name }}</strong><small>{{ row.published }} published · {{ row.in_flight }} in production</small></div>
+                <span class="score-pill {% if row.days_since is none or row.days_since > 30 %}warn{% else %}good{% endif %}">{% if row.days_since is none %}—{% else %}{{ row.days_since }}d{% endif %}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-note">No pillars defined yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Stuck content</h2><span class="section-note">untouched 14+ days</span></div>
+        {% if stuck %}
+        <div class="two-col-list">
+            {% for c in stuck %}
+            <div class="mini-row">
+                <div><strong>{{ c.title }}</strong><small>{{ c.status.value }} · {{ c.platform.value }}</small></div>
+                <a class="btn ghost small" href="/content/{{ c.id }}">Open</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">✓</div><strong>Nothing is stuck</strong><p>Every in-production item has been touched recently.</p></div>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Open deals</h2><a class="link" href="/deals">Pipeline</a></div>
+        {% if deals %}
+        <div class="two-col-list">
+            {% for d in deals %}
+            <div class="mini-row">
+                <div><strong>{{ d.brand_name }}</strong><small>{{ d.campaign_name }} · {{ d.stage|replace('_',' ') }}</small></div>
+                <span class="metric">{{ money(d.deal_value) }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-note">No open deals.</p>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Capacity</h2><a class="link" href="/workflow">Workflow</a></div>
+        <div class="breakdown">
+            <div class="breakdown-row"><span>Planned this week</span><strong>{{ workload.planned_hours }}h</strong></div>
+            <div class="breakdown-row"><span>Available</span><strong>{{ workload.available_hours }}h</strong></div>
+            <div class="breakdown-row"><span>Load</span><strong>{{ workload.capacity }}%</strong></div>
+        </div>
+        <p class="section-note" style="margin-top:10px">{{ workload.explanation }}</p>
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Opportunity radar</h2><a class="link" href="/growth/opportunities">All</a></div>
+        {% if opportunities %}
+        <div class="two-col-list">
+            {% for o in opportunities %}
+            <div class="mini-row">
+                <div><strong>{{ o.item.title }}</strong><small>{{ o.why }}</small></div>
+                <a class="link" href="/growth/opportunities/{{ o.item.id }}">Open</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="section-note">No open opportunities. Capture a few so the radar has something to rank.</p>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Cash outlook</h2><a class="link" href="/money/payments">Payments</a></div>
+        <div class="breakdown">
+            <div class="breakdown-row"><span>Outstanding</span><strong>{{ money(forecast.outstanding_total) }}</strong></div>
+            <div class="breakdown-row"><span>Expected in 30 days</span><strong>{{ money(forecast.expected_30) }}</strong></div>
+            <div class="breakdown-row"><span>Pipeline</span><strong>{{ money(forecast.pipeline_value) }}</strong></div>
+        </div>
+        <p class="section-note" style="margin-top:10px">{{ forecast.basis }}</p>
+    </section>
+</div>
+{% endblock %}

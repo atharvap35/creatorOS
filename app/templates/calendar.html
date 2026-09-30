@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block page_id %}calendar{% endblock %}
+{% block breadcrumb %}Calendar{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Deadlines, publishes, follow-ups</p><h1>Calendar</h1><p class="page-subtitle">{{ anchor.strftime("%B %Y") }} — content deadlines, tasks, deal deadlines and actual publish dates in one place.</p></div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/content">Content</a>
+        <a class="btn ghost small" href="/deals">Deals</a>
+    </div>
+</header>
+
+<div class="tabs">
+    {% set calendar_views = {'month': 'Month', 'week': 'Week', 'list': 'List'} %}
+    {% for key, label in calendar_views.items() %}
+    <a class="tab{% if view == key %} active{% endif %}" href="/calendar?view={{ key }}&date_param={{ anchor.isoformat() }}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<div class="toolbar">
+    <a class="btn ghost small" href="/calendar?view={{ view }}&date_param={{ prev }}">← Previous</a>
+    <a class="btn ghost small" href="/calendar?view={{ view }}">Today</a>
+    <a class="btn ghost small" href="/calendar?view={{ view }}&date_param={{ next }}">Next →</a>
+    <span class="section-note">{{ counts.content }} due · {{ counts.publishing }} published · {{ counts.tasks }} tasks · {{ counts.deals }} deal deadlines</span>
+</div>
+
+{% if conflicts %}
+<section class="clay-card card-pad" style="margin-bottom:20px; border-left:4px solid #c2566b">
+    <div class="section-head"><h2>Conflicts</h2><span class="section-note">{{ conflicts|length }} overloaded day(s)</span></div>
+    <div class="two-col-list">
+        {% for c in conflicts %}
+        <div class="mini-row"><div><strong>{{ c.day.strftime("%A, %d %B") }}</strong><small>{{ c.count }} commitments scheduled</small></div></div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="clay-card card-pad">
+    {% if days %}
+    <div class="calendar-grid">
+        {% for day, label in days %}
+        <div class="calendar-cell{% if day.month != anchor.month %} muted{% endif %}{% if day == anchor and view == 'month' %} is-today{% endif %}">
+            <div class="calendar-cell-head"><span class="calendar-label">{{ label }}</span><strong>{{ day.day }}</strong></div>
+            {% for kind, entry in by_day.get(day, []) %}
+            <div class="cal-event {{ kind }}">
+                {% if kind == 'content' %}<a class="link" href="/content/{{ entry.id }}">{{ entry.title }}</a>
+                {% elif kind == 'published' %}<span class="published-mark">✓ {{ entry.title }}</span>
+                {% elif kind == 'task' %}<span>○ {{ entry.title }}</span>
+                {% else %}<a class="link" href="/deals/{{ entry.id }}">◇ {{ entry.brand_name }}</a>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="list-stack">
+        {% set grouped = {} %}
+        {% for day, entries in by_day.items() %}{% set _ = grouped.update({day: entries}) %}{% endfor %}
+        {% for day, entries in by_day.items()|sort %}
+        <article class="list-card">
+            <div class="list-card-content">
+                <h3>{{ day.strftime("%A, %d %B %Y") }}</h3>
+                <div class="list-card-meta">
+                    {% for kind, entry in entries %}
+                    {% if kind == 'content' %}<span class="badge">due: <a class="link" href="/content/{{ entry.id }}">{{ entry.title }}</a></span>
+                    {% elif kind == 'published' %}<span class="badge published">published: {{ entry.title }}</span>
+                    {% elif kind == 'task' %}<span class="badge">task: {{ entry.title }}</span>
+                    {% else %}<span class="badge">deal: <a class="link" href="/deals/{{ entry.id }}">{{ entry.brand_name }}</a></span>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+        {% if not by_day %}
+        <div class="empty-state">
+            <div class="empty-icon">▦</div>
+            <strong>Nothing scheduled in this range</strong>
+            <p>Give content, tasks or deals a due date and they will appear here.</p>
+            <a class="btn small" href="/quick?type=content">Capture content</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

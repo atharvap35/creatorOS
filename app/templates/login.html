@@ -1,0 +1,17 @@
+{% extends "auth_base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="auth-head">
+    <p class="eyebrow">Welcome back</p>
+    <h1>Sign in to your workspace</h1>
+    <p class="page-subtitle">Pick up exactly where you left off.</p>
+</div>
+{% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+<form class="form-stack" action="/login" method="post">
+    <input type="hidden" name="next" value="{{ next_url or '/today' }}">
+    <div class="field"><label for="login-email">Email</label><input id="login-email" type="email" name="email" placeholder="you@example.com" required autofocus></div>
+    <div class="field"><label for="login-password">Password</label><input id="login-password" type="password" name="password" placeholder="Your password" required></div>
+    <button type="submit">Sign in <span aria-hidden="true">→</span></button>
+</form>
+<p class="auth-switch">New to Creator OS? <a href="/register">Create an account</a></p>
+{% endblock %}

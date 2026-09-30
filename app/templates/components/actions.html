@@ -1,0 +1,41 @@
+{# A "do it" button for any recommendation, attention item, or money row.
+
+   Usage:  {% from "components/actions.html" import action_button %}
+           {{ action_button(action.slug, action.label, entity_type, entity_id) }}
+
+   Every rendered button POSTs to /action/{slug} with the entity id, so the
+   action is executed by the service layer, never by the template. `next`
+   carries the page to return to after a successful change. #}
+
+{% macro action_button(slug, label, entity_type='', entity_id='', next='', kind='ghost', next_url='') -%}
+<form class="inline-form action-form" action="/action/{{ slug }}" method="post">
+    <input type="hidden" name="entity_id" value="{{ entity_id if entity_id is not none else '' }}">
+    <input type="hidden" name="next" value="{{ next_url or request.url.path }}">
+    <button class="btn {{ kind }} small" type="submit">{{ label }}</button>
+</form>
+{%- endmacro %}
+
+
+{% macro action_buttons(actions, entity_type='', entity_id='', next_url='') -%}
+{%- for a in actions %}
+{{ action_button(a.slug, a.label, entity_type, entity_id, kind='small', next_url=next_url) }}
+{%- endfor %}
+{%- endmacro %}
+
+
+{# The full "why this matters" explanation, shown in a consistent order. #}
+{% macro rationale(move) -%}
+<dl class="rationale">
+    <div><dt>What</dt><dd>{{ move.what or move.title }}</dd></div>
+    <div><dt>Why</dt><dd>{{ move.why or move.reason }}</dd></div>
+    <div><dt>Impact</dt><dd>{{ move.benefit }}</dd></div>
+    <div><dt>Effort</dt><dd>~{{ move.effort_minutes }} min</dd></div>
+    <div><dt>If it slips</dt><dd>{{ move.consequence }}</dd></div>
+</dl>
+{%- endmacro %}
+
+
+{# Provenance badge. Every number the creator sees says where it came from. #}
+{% macro basis(basis_value) -%}
+<span class="basis-tag" data-basis="{{ basis_value }}">{{ basis_value }}</span>
+{%- endmacro %}

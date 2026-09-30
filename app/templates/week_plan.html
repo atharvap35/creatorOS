@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import basis %}
+{% block title %}Plan my week{% endblock %}
+{% block page_id %}week-plan{% endblock %}
+{% block breadcrumb %}Workflow / Plan{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">A proposal, not an order</p>
+        <h1>Plan my week</h1>
+        <p class="page-subtitle">The plan is built from your own open tasks, deliverables and deadlines, then fitted to the hours you said you have. Nothing is scheduled until you accept it.</p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/workflow">Workflow</a></div>
+</header>
+
+<section class="clay-card card-pad">
+    <div class="section-head">
+        <h2>Your capacity</h2>
+        {{ basis('system-derived') }}
+    </div>
+    <p>{{ capacity.explanation }}</p>
+    <div class="progress"><span style="width: {{ [capacity.capacity_pct, 100]|min }}%"></span></div>
+    <p class="section-note">
+        {{ capacity.planned_hours }}h planned against {{ capacity.available_hours }}h available
+        {%- if preference and preference.hours_per_day %} ({{ preference.hours_per_day }}h a day on {{ capacity.working_days|length }} working day(s)){% endif %}.
+    </p>
+</section>
+
+{% if payload %}
+<section class="clay-card card-pad">
+    <div class="section-head">
+        <h2>Proposed week</h2>
+        <span class="section-note">{{ payload.get('entries')|length }} item(s) placed</span>
+    </div>
+
+    <div class="week-plan">
+        {% for slot in payload.get('entries', []) %}
+        {% set e = slot.get('entry', {}) %}
+        <div class="plan-day{% if e.get('unplaced') %} unplaced{% endif %}">
+            <h3>{{ slot.get('label', '') }} <span class="section-note">{{ slot.get('date', '') }}</span></h3>
+            <ul class="plain-list">
+                <li>
+                    <strong>{{ e.get('title') }}</strong>
+                    <span class="section-note">{{ e.get('reason', '') }} · {{ e.get('minutes', 20) }} min{% if e.get('priority') %} · {{ e.get('priority') }}{% endif %}</span>
+                </li>
+            </ul>
+            {% if e.get('unplaced') %}
+            <p class="section-note bad">This did not fit your available hours, so it was left out rather than overfilling the day.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="empty-actions">
+        <form action="/workflow/plan/accept" method="post">
+            <input type="hidden" name="plan_id" value="{{ plan.id }}">
+            <button class="btn" type="submit">Accept this week</button>
+        </form>
+        <form action="/workflow/plan/dismiss" method="post">
+            <input type="hidden" name="plan_id" value="{{ plan.id }}">
+            <button class="btn ghost small" type="submit">Not this week</button>
+        </form>
+    </div>
+    <p class="section-note">Accepting records the plan day on your own tasks and deliverables. It does not create or delete anything.</p>
+</section>
+{% else %}
+<section class="clay-card card-pad">
+    <div class="empty-state">
+        <div class="empty-icon">▦</div>
+        <strong>No plan proposed yet</strong>
+        <p>Build a schedule from what is already on your plate: open tasks, deliverables with deadlines this week, and content you could still repurpose.</p>
+        <form action="/workflow/plan/propose" method="post">
+            <button class="btn" type="submit">Propose my week</button>
+        </form>
+    </div>
+</section>
+{% endif %}
+
+{% if rebalance and rebalance.get('suggestions') %}
+<section class="clay-card card-pad">
+    <div class="section-head">
+        <h2>Over capacity — what to move</h2>
+        <span class="section-note">you choose what slips</span>
+    </div>
+    <p class="section-note">You are {{ capacity.overload_hours }}h over. These are the lowest-priority items due this week. Moving one pushes its due date out by a week; nothing is deleted.</p>
+    <form action="/action/apply_rebalance" method="post">
+        <input type="hidden" name="next" value="/workflow/plan">
+        <div class="list-stack">
+            {% for s in rebalance['suggestions'] %}
+            <label class="atom-row" for="mv-{{ s.task.id }}">
+                <input id="mv-{{ s.task.id }}" type="checkbox" name="entities" value='{"task_ids": [{{ s.task.id }}]}'>
+                <span class="atom-body">
+                    <strong>{{ s.task.title }}</strong>
+                    <span class="section-note">{{ s.reason }} · move to {{ s.suggested_day }}</span>
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+        <p class="section-note">Select one. The action accepts a single task at a time, so moving several means repeating the step — deliberately, so nothing is rescheduled by surprise.</p>
+    </form>
+</section>
+{% endif %}
+{% endblock %}

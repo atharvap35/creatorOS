@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_buttons %}
+{% block title %}Weekly review{% endblock %}
+{% block page_id %}weekly-review{% endblock %}
+{% block breadcrumb %}Reviews / Weekly{% endblock %}
+{% block topbar_extra %}
+    <a class="btn ghost small" href="/reviews/monthly">Monthly</a>
+    <a class="btn ghost small" href="/reviews/business">Business</a>
+{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ review.period_start.strftime("%d %b") }} — {{ review.period_end.strftime("%d %b %Y") }}</p>
+        <h1>Weekly review</h1>
+        <p class="page-subtitle">Built from what you actually recorded. No invented wins.</p>
+    </div>
+</header>
+
+<div class="stat-grid">
+    <div class="stat-tile"><span class="eyebrow">Tasks completed</span><div class="stat-value">{{ review.happened.tasks_completed }}</div></div>
+    <div class="stat-tile"><span class="eyebrow">Published</span><div class="stat-value">{{ review.happened.content_published }}</div></div>
+    <div class="stat-tile"><span class="eyebrow">Ideas captured</span><div class="stat-value">{{ review.happened.ideas_created }}</div></div>
+    <div class="stat-tile"><span class="eyebrow">Revenue received</span><div class="stat-value">{{ money(review.happened.revenue_received) }}</div></div>
+</div>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>What worked</h2></div>
+            <ul class="check-list">{% for w in review.worked %}<li>{{ w }}</li>{% endfor %}</ul>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>What didn't</h2></div>
+            <ul class="check-list">{% for d in review.didnt %}<li>{{ d }}</li>{% endfor %}</ul>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>What slipped</h2><span class="section-note">{{ review.slipped|length }} item(s) due this week, not done</span></div>
+            {% if review.slipped %}
+            <ul class="check-list">
+                {% for s in review.slipped %}
+                <li><strong>{{ s.title }}</strong> <span class="section-note">{{ s.kind }} · was due {{ s.due.strftime('%a %d %b') if s.due else 'no date' }}</span></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="section-note">Nothing was due and left undone this week.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Decisions you made</h2><span class="section-note">only recorded changes</span></div>
+            {% if review.decisions %}
+            <ul class="check-list">
+                {% for d in review.decisions %}
+                <li>{{ d.title }} <span class="section-note">{{ d.when.strftime('%a %d %b') if d.when else '' }}</span></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="section-note">No payments received and no deal stage changes recorded this week.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Next week's focus</h2><span class="section-note">ranked, and each one actionable</span></div>
+            {% if review.focus %}
+            <div class="two-col-list">
+                {% for f in review.focus %}
+                <div class="mini-row">
+                    <div>
+                        <strong>{{ f.title }}</strong>
+                        <small>{{ f.why }} · {{ f.impact }}</small>
+                        {% if f.consequence %}<small class="consequence">If it slips: {{ f.consequence }}</small>{% endif %}
+                    </div>
+                    <div class="inline-action">
+                        {% if f.actions %}{{ action_buttons(f.actions, next_url='/reviews/weekly') }}{% endif %}
+                        <a class="btn ghost small" href="{{ f.url }}">Open</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">Nothing needs your attention — either the week is clear or the week is empty. Both are useful signals.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Next week's candidates</h2><span class="section-note">pick one to create</span></div>
+            {% if review.next_actions %}
+            <div class="two-col-list">
+                {% for a in review.next_actions %}
+                <div class="mini-row">
+                    <div><strong>{{ a.title }}</strong><small>{{ a.reason }} · {{ a.effort_minutes }} min</small></div>
+                    <form class="inline-form" action="/reviews/start-week" method="post">
+                        <input type="hidden" name="title" value="{{ a.title }}">
+                        <input type="hidden" name="reason" value="{{ a.reason }}">
+                        <input type="hidden" name="minutes" value="{{ a.effort_minutes }}">
+                        <button class="btn ghost small" type="submit">Add to week</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">Nothing outstanding — either the week is clear or the week is empty. Both are useful signals.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="form-card clay-card">
+        <div class="section-head"><h2>This week</h2><span class="section-note">system-derived</span></div>
+        <p class="section-note">{{ review.capacity.explanation }}</p>
+        <div class="progress"><span style="width: {{ [review.capacity.capacity_pct, 100]|min }}%"></span></div>
+        <p class="section-note">{{ review.capacity.planned_hours }}h of {{ review.capacity.available_hours }}h used.</p>
+        {% if review.attention.total %}
+        <p class="section-note">{{ review.attention.headline }}. <a href="/attention">Attention Center</a></p>
+        {% endif %}
+        <hr>
+        <h2>Start next week yourself</h2>
+        <p>Type the single most important thing, and it becomes a real task.</p>
+        <form class="form-stack" action="/reviews/start-week" method="post">
+            <div class="field"><label for="w-title">Task</label><input id="w-title" name="title" placeholder="e.g. Publish the tools roundup"></div>
+            <div class="field"><label for="w-reason">Why it matters</label><input id="w-reason" name="reason" placeholder="Optional"></div>
+            <div class="field"><label for="w-min">Estimated minutes</label><input id="w-min" name="minutes" type="number" value="20" min="0"></div>
+            <button class="btn" type="submit">Create task</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

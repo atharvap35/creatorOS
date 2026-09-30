@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Workflow{% endblock %}
+{% block page_id %}workflow{% endblock %}
+{% block breadcrumb %}Workflow{% endblock %}
+{% block topbar_extra %}<a class="btn ghost small" href="/workflow/focus">Focus mode</a>{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Execution, not administration</p><h1>Creator workflow</h1><p class="page-subtitle">{{ workload.explanation }}</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/calendar">Calendar</a></div>
+</header>
+
+<div class="tabs">
+    {% for key, label in views.items() %}
+    <a class="tab{% if view == key %} active{% endif %}" href="/workflow?view={{ key }}">{{ label }} <span class="section-note">{{ counts[key] }}</span></a>
+    {% endfor %}
+</div>
+
+<form class="toolbar" method="get" action="/workflow">
+    <input type="hidden" name="view" value="{{ view }}">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search tasks…">
+    <button class="btn small" type="submit">Search</button>
+    {% if q %}<a class="link" href="/workflow?view={{ view }}">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>{{ views[view] }}</h2><span class="section-note">{{ items|length }} tasks</span></div>
+        {% if items %}
+        <div class="list-stack">
+            {% for item in items %}
+            <article class="list-card">
+                <span class="list-card-icon">{% if item.status.value == 'completed' %}✓{% else %}○{% endif %}</span>
+                <div class="list-card-content">
+                    <h3>{{ item.title }}</h3>
+                    {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge {{ item.status.value }}">{{ item.status.value }}</span>
+                        <span class="badge">{{ item.category.value }}</span>
+                        <span class="badge {{ item.priority.value }}">{{ item.priority.value }}</span>
+                        {% if item.estimated_minutes %}<span class="section-note">{{ item.estimated_minutes }} min</span>{% endif %}
+                        {% if item.due_date %}<span class="section-note">Due {{ item.due_date.strftime("%b %d") }}</span>{% endif %}
+                        {% if item.content_id %}<a class="link" href="/content/{{ item.content_id }}">linked content</a>{% endif %}
+                        {% if item.deal_id %}<a class="link" href="/deals/{{ item.deal_id }}">linked deal</a>{% endif %}
+                    </div>
+                </div>
+                <div class="row-actions">
+                    <form action="/workflow/{{ item.id }}/complete" method="post"><button class="btn small" type="submit">{% if item.status.value == 'completed' %}Reopen{% else %}Mark done{% endif %}</button></form>
+                    <form action="/workflow/{{ item.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✓</div>
+            <strong>Nothing in {{ views[view]|lower }}</strong>
+            <p>Tasks here come from your own deadlines, content plans and reviews — this view is simply empty right now.</p>
+            <a class="btn small" href="/quick?type=task">Add a task</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add a task</h2>
+        <p>One clear next step beats a list of intentions.</p>
+        <form class="form-stack" action="/workflow" method="post">
+            <div class="field"><label for="t-title">Task</label><input id="t-title" name="title" required placeholder="e.g. Outline sponsor script"></div>
+            <div class="field"><label for="t-desc">Notes</label><input id="t-desc" name="description" placeholder="Optional context"></div>
+            <div class="field"><label for="t-cat">Category</label><select id="t-cat" name="category"><option value="content">Content</option><option value="business">Business</option><option value="monetization">Monetization</option><option value="audience">Audience</option><option value="admin">Admin</option></select></div>
+            <div class="field"><label for="t-pri">Priority</label><select id="t-pri" name="priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+            <div class="field"><label for="t-due">Due date</label><input id="t-due" name="due_date" type="date"></div>
+            <div class="field"><label for="t-min">Estimated minutes</label><input id="t-min" name="estimated_minutes" type="number" min="0" value="20"></div>
+            <button class="btn" type="submit">Create task</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

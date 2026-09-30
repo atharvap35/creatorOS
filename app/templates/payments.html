@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block page_id %}payments{% endblock %}
+{% block breadcrumb %}Money / Payments{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Payment tracker</p><h1>Money owed to you</h1><p class="page-subtitle">Every unpaid entry you logged, with how long it has been sitting there.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/money">Back to money</a></div>
+</header>
+
+<div class="stat-grid">
+    <div class="stat-tile"><span class="eyebrow">Total outstanding</span><div class="stat-value">{{ money(total) }}</div><p class="stat-sub">{{ owed|length }} item(s)</p></div>
+    <div class="stat-tile"><span class="eyebrow">Overdue</span><div class="stat-value">{{ money(overdue_total) }}</div><p class="stat-sub">past the due date you set</p></div>
+</div>
+
+<section class="clay-card card-pad">
+    <div class="section-head"><h2>Open payments</h2><span class="section-note">Quick actions included</span></div>
+    {% if owed %}
+    <div class="two-col-list">
+        {% for item in owed %}
+        <div class="mini-row">
+            <div>
+                <strong>{{ money(item.amount) }}</strong>
+                <small>{{ item.entry.description or item.entry.source.value }} · {% if item.due %}due {{ item.due.strftime("%b %d, %Y") }}{% else %}no due date{% endif %}{% if item.days_outstanding %} · {{ item.days_outstanding }} day(s) outstanding{% endif %}</small>
+            </div>
+            <div class="row-actions">
+                <span class="badge {{ item.severity }}">{{ item.severity.replace('_', ' ') }}</span>
+                {% if item.entry.deal_id %}<a class="btn ghost small" href="/deals/{{ item.entry.deal_id }}">Open deal</a>{% endif %}
+                <form action="/money/{{ item.entry.id }}/status" method="post"><button class="btn small" type="submit" name="status" value="received">Mark paid</button></form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">$</div>
+        <strong>Nothing is owed to you</strong>
+        <p>When you log a pending payment it appears here with a running count of days outstanding.</p>
+        <a class="btn small" href="/money">Log a payment</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

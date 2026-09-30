@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Repurpose{% endblock %}
+{% block page_id %}repurpose{% endblock %}
+{% block breadcrumb %}Content / {{ item.title }} / Repurpose{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">One recording, many pieces</p><h1>Repurposing workspace</h1><p class="page-subtitle">Original: <strong>{{ item.title }}</strong> — build a plan, then convert any derivative into a real content item.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/content/{{ item.id }}">Back to content</a></div>
+</header>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>1. Give us the material</h2><span class="section-note">Transcript, script, notes or a summary</span></div>
+            <form class="form-stack" action="/content/{{ item.id }}/repurpose" method="post">
+                <input type="hidden" name="action" value="plan">
+                <div class="field"><label for="src">Source text</label><textarea id="src" name="source_text" rows="7" placeholder="Paste a transcript, script, or notes. Everything stays in your account.">{{ source_text }}</textarea></div>
+                <div><button class="btn" type="submit">Build repurposing plan</button></div>
+            </form>
+        </section>
+
+        {% if plan %}
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>2. Suggested plan</h2><span class="ai-note">✦ {{ ai.provider }}</span></div>
+            <p class="section-note">Draft output — edit anything before you save it as a brief.</p>
+            <div class="ai-output">{{ plan }}</div>
+            <form class="toolbar" action="/content/{{ item.id }}" method="post" style="margin-top:14px">
+                <input type="hidden" name="title" value="{{ item.title }}">
+                <input type="hidden" name="status" value="{{ item.status.value }}">
+                <input type="hidden" name="brief_goal" value="{{ 'reach' }}">
+                <input name="brief_repurposing" value="{{ plan }}" aria-label="Repurposing plan">
+                <button class="btn small" type="submit">Save to this piece's brief</button>
+            </form>
+        </section>
+        {% endif %}
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>3. Derivatives</h2><span class="section-note">{{ derivatives|length }} planned</span></div>
+            {% if derivatives %}
+            <div class="two-col-list">
+                {% for d in derivatives %}
+                <div class="mini-row">
+                    <div><strong>{{ d.title }}</strong><small>{{ d.kind }} · {{ d.platform }} · {{ d.status.replace('_', ' ') }}</small></div>
+                    {% if d.status == 'planned' %}
+                    <form action="/content/{{ item.id }}/derivatives/{{ d.id }}/convert" method="post"><button class="btn small" type="submit">Make content</button></form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><div class="empty-icon">↻</div><strong>No derivatives yet</strong><p>Pick the formats below and Creator OS will track them for you.</p></div>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="form-card clay-card">
+        <h2>Add a derivative</h2>
+        <p>Shortcuts for the formats that work hardest.</p>
+        <div class="two-col-list">
+            {% for key, label, platform in kinds %}
+            <form class="mini-row" action="/content/{{ item.id }}/repurpose" method="post">
+                <input type="hidden" name="action" value="{{ key }}::{{ platform }}">
+                <div><strong>{{ label }}</strong><small>{{ platform|title }}</small></div>
+                <button class="btn ghost small" type="submit">Add</button>
+            </form>
+            {% endfor %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

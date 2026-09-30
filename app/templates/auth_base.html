@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f1ec">
+    <title>{% block title %}Creator OS{% endblock %} · Creator OS</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="auth-body">
+    <main class="auth-shell">
+        <section class="auth-card">
+            <div class="auth-brand">
+                <span class="brand-mark">c</span>
+                <span class="brand-copy"><strong>creator<span>OS</span></strong><small>your business, in rhythm</small></span>
+            </div>
+            {% block content %}{% endblock %}
+        </section>
+        <aside class="auth-aside">
+            <h2>Every creator business runs on a system.</h2>
+            <p>Content, partnerships, tasks, and money — each in its own space, all connected to one calm operating rhythm.</p>
+            <ul class="auth-points">
+                <li><span>✳</span> A daily plan built from what actually matters</li>
+                <li><span>◇</span> Deal and payment tracking that never drifts</li>
+                <li><span>$</span> Revenue you can trust at a glance</li>
+            </ul>
+        </aside>
+    </main>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button with context %}
+{% block title %}Offers{% endblock %}
+{% block page_id %}offers{% endblock %}
+{% block breadcrumb %}Offers{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">What you actually sell</p>
+        <h1>Offers</h1>
+        <p class="page-subtitle">An offer is a package you can attach to a deal. An offer that has never been attached is a route to money you are not taking.</p>
+    </div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your offers</h2><span class="section-note">{{ offers|length }} total</span></div>
+        {% if offers %}
+        <div class="list-stack">
+            {% for o in offers %}
+            {% set used = usage.get(o.id, 0) %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3><a href="/offers/{{ o.id }}">{{ o.name }}</a></h3>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ o.offer_type }}</span>
+                        {% if o.is_active %}<span class="badge ok">active</span>{% else %}<span class="badge warn">paused</span>{% endif %}
+                        {% if not used %}<span class="badge">never used</span>{% endif %}
+                    </div>
+                    <p class="section-note">
+                        {{ money((o.price or 0)|round(0)|int) }}
+                        {% if o.turnaround_days %} · {{ o.turnaround_days }} day turnaround{% endif %}
+                        · used in {{ used }} deal{{ '' if used == 1 else 's' }}
+                    </p>
+                </div>
+                <div class="inline-action">
+                    {% if not used %}{{ action_button('create_opportunity', 'Find it a brand', 'offer', o.id) }}{% endif %}
+                    <form action="/offers/{{ o.id }}/toggle" method="post"><button class="btn ghost small" type="submit">{{ 'Pause' if o.is_active else 'Activate' }}</button></form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◈</div>
+            <strong>No offers yet</strong>
+            <p>Define what you sell, at what price, and how long it takes. Then attach it to a deal and the economics follow.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Create an offer</h2>
+        <form class="form-stack" action="/offers" method="post">
+            <div class="field"><label for="o-name">Offer name</label><input id="o-name" name="name" required placeholder="e.g. 60s sponsored video"></div>
+            <div class="field"><label for="o-type">Type</label>
+                <select id="o-type" name="offer_type">
+                    <option value="sponsorship">Sponsorship</option>
+                    <option value="affiliate">Affiliate</option>
+                    <option value="consulting">Consulting</option>
+                    <option value="digital_product">Digital product</option>
+                    <option value="membership">Membership</option>
+                </select>
+            </div>
+            <div class="field"><label for="o-desc">Description</label><textarea id="o-desc" name="description" rows="3"></textarea></div>
+            <div class="field"><label for="o-deliv">Deliverables</label><textarea id="o-deliv" name="deliverables" rows="3" placeholder="One 60s video, two stories"></textarea></div>
+            <div class="grid-2">
+                <div class="field"><label for="o-price">Price</label><input id="o-price" name="price" type="number" step="0.01" value="0"></div>
+                <div class="field"><label for="o-turn">Turnaround (days)</label><input id="o-turn" name="turnaround_days" type="number" min="1"></div>
+            </div>
+            <div class="field"><label for="o-terms">Terms</label><textarea id="o-terms" name="terms" rows="2"></textarea></div>
+            <button class="btn" type="submit">Create offer</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

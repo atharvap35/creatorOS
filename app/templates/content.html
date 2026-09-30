@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Content{% endblock %}
+{% block page_id %}content{% endblock %}
+{% block breadcrumb %}Content{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Plan, produce, publish</p><h1>Content engine</h1><p class="page-subtitle">Everything from raw idea to published piece, with the next step always visible.</p></div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/content/pillars">Content pillars</a>
+        <a class="btn ghost small" href="/calendar">Calendar</a>
+    </div>
+</header>
+
+<div class="tabs">
+    <a class="tab{% if view != 'board' %} active{% endif %}" href="/content">List</a>
+    <a class="tab{% if view == 'board' %} active{% endif %}" href="/content/pipeline">Pipeline board</a>
+    <a class="tab" href="/content?status_filter=published">Published</a>
+    <a class="tab" href="/content?status_filter=editing">In production</a>
+</div>
+
+<form class="toolbar" method="get" action="/content">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search your pipeline…">
+    <select name="status_filter">
+        <option value="">All stages</option>
+        {% for stage in stages %}
+        <option value="{{ stage }}" {% if status_filter == stage %}selected{% endif %}>{{ stage|title }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn small" type="submit">Filter</button>
+    {% if q or status_filter %}<a class="link" href="/content">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Pipeline</h2><span class="section-note">{{ items|length }} pieces</span></div>
+        {% if items %}
+        <div class="list-stack">
+            {% for item in items %}
+            <article class="list-card">
+                <span class="list-card-icon">{% if item.status.value == 'published' %}✓{% else %}○{% endif %}</span>
+                <div class="list-card-content">
+                    <h3><a class="link" href="/content/{{ item.id }}">{{ item.title }}</a></h3>
+                    {% if item.description %}<p>{{ item.description }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge {{ item.status.value }}">{{ item.status.value }}</span>
+                        <span class="badge">{{ item.platform.value }}</span>
+                        <span class="badge">{{ item.content_type.value }}</span>
+                        {% if item.due_date %}<span class="section-note">Due {{ item.due_date.strftime("%b %d") }}</span>{% endif %}
+                        {% if item.source != 'manual' %}<span class="section-note">via {{ item.source }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="row-actions">
+                    <a class="btn ghost small" href="/content/{{ item.id }}">Open</a>
+                    <form action="/content/{{ item.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">▤</div>
+            <strong>No content here yet</strong>
+            <p>The pipeline is how one idea becomes a published piece. Add your first item, or turn an idea into a plan.</p>
+            <a class="btn small" href="/quick?type=content">Capture content</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add to the pipeline</h2>
+        <p>Capture it now — the brief and production tasks come next.</p>
+        <form class="form-stack" action="/content" method="post">
+            <div class="field"><label for="content-title">Working title</label><input id="content-title" name="title" placeholder="e.g. 5 AI tools I actually use" required></div>
+            <div class="field"><label for="content-platform">Platform</label><select id="content-platform" name="platform"><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="x">X</option><option value="newsletter">Newsletter</option><option value="other">Other</option></select></div>
+            <div class="field"><label for="content-type">Format</label><select id="content-type" name="content_type"><option value="reel">Reel</option><option value="short">Short</option><option value="video">Video</option><option value="carousel">Carousel</option><option value="post">Post</option><option value="story">Story</option><option value="newsletter">Newsletter</option><option value="podcast">Podcast</option><option value="other">Other</option></select></div>
+            <div class="field"><label for="content-status">Stage</label><select id="content-status" name="status">{% for stage in stages %}<option value="{{ stage }}">{{ stage|title }}</option>{% endfor %}</select></div>
+            {% if pillars %}
+            <div class="field"><label for="content-pillar">Pillar</label><select id="content-pillar" name="pillar_id"><option value="">No pillar</option>{% for p in pillars %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+            {% endif %}
+            <div class="field"><label for="content-topic">Topic</label><input id="content-topic" name="topic" placeholder="e.g. Productivity"></div>
+            <div class="field"><label for="content-due">Due date</label><input id="content-due" name="due_date" type="date"></div>
+            <div class="field"><label for="content-minutes">Estimated minutes</label><input id="content-minutes" name="estimated_minutes" type="number" min="0" placeholder="45"></div>
+            <button class="btn" type="submit">Add to pipeline</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

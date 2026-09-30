@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}{{ deal.brand_name }}{% endblock %}
+{% block page_id %}deal-detail{% endblock %}
+{% block breadcrumb %}Deals / {{ deal.brand_name }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Deal · {{ (deal.stage or 'lead')|replace('_', ' ') }}</p>
+        <h1>{{ deal.brand_name }}</h1>
+        <p class="page-subtitle">{{ deal.campaign_name }}{% if deal.contact_name %} · {{ deal.contact_name }}{% endif %}</p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/deals">Back to deals</a></div>
+</header>
+
+<section class="one-thing" style="background:none; box-shadow:none; padding:0; margin-bottom:22px">
+    <div style="padding:18px 20px; border-radius:18px; background:var(--surface); box-shadow:var(--shadow-soft)">
+        <span class="eyebrow">Deal health</span>
+        <h2 style="margin-bottom:6px">{{ health.label }}</h2>
+        <div class="two-col-list">
+            {% for reason in health.reasons %}
+            <p class="section-note">• {{ reason }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Pipeline stage</h2><span class="section-note">{{ money(deal.deal_value) }}</span></div>
+            <div class="stage-track">
+                {% for key, label in stages %}
+                <form action="/deals/{{ deal.id }}" method="post">
+                    <input type="hidden" name="brand_name" value="{{ deal.brand_name }}">
+                    <input type="hidden" name="campaign_name" value="{{ deal.campaign_name }}">
+                    <input type="hidden" name="deal_value" value="{{ deal.deal_value or 0 }}">
+                    <input type="hidden" name="payment_status" value="{{ deal.payment_status.value }}">
+                    <input type="hidden" name="next_action" value="{{ deal.next_action or '' }}">
+                    <input type="hidden" name="follow_up_date" value="{{ deal.follow_up_date.strftime('%Y-%m-%dT%H:%M') if deal.follow_up_date else '' }}">
+                    <input type="hidden" name="deadline" value="{{ deal.deadline.strftime('%Y-%m-%dT%H:%M') if deal.deadline else '' }}">
+                    <input type="hidden" name="payment_due_date" value="{{ deal.payment_due_date.strftime('%Y-%m-%dT%H:%M') if deal.payment_due_date else '' }}">
+                    <input type="hidden" name="description" value="{{ deal.description or '' }}">
+                    <input type="hidden" name="contact_name" value="{{ deal.contact_name or '' }}">
+                    <input type="hidden" name="contact_email" value="{{ deal.contact_email or '' }}">
+                    <input type="hidden" name="payment_terms" value="{{ deal.payment_terms or '' }}">
+                    <input type="hidden" name="notes" value="{{ deal.notes or '' }}">
+                    <input type="hidden" name="stage" value="{{ key }}">
+                    <button class="stage-chip {% if key == deal.stage %}current{% endif %}" type="submit">{{ label }}</button>
+                </form>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Deliverables</h2><span class="section-note">{{ deliverables|length }} tracked</span></div>
+            {% if deliverables %}
+            <div class="two-col-list">
+                {% for d in deliverables %}
+                <div class="mini-row">
+                    <div>
+                        <strong>{{ d.title }}</strong>
+                        <small>{% if d.deadline %}Due {{ d.deadline.strftime("%b %d") }}{% else %}No deadline{% endif %}{% if d.notes %} · {{ d.notes }}{% endif %}</small>
+                    </div>
+                    <div class="row-actions">
+                        <form action="/deliverables/{{ d.id }}/status" method="post">
+                            <select name="status" class="inline-select" aria-label="Status for {{ d.title }}">
+                                <option value="pending" {% if d.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if d.status == 'in_progress' %}selected{% endif %}>In progress</option>
+                                <option value="submitted" {% if d.status == 'submitted' %}selected{% endif %}>Submitted</option>
+                                <option value="approved" {% if d.status == 'approved' %}selected{% endif %}>Approved</option>
+                            </select>
+                            <button class="btn ghost small" type="submit">Set</button>
+                        </form>
+                        <form action="/deliverables/{{ d.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">×</button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><div class="empty-icon">✓</div><strong>No deliverables yet</strong><p>List what the brand is getting — it drives the deal's health and stops the “almost done” drift.</p></div>
+            {% endif %}
+            <form class="toolbar" action="/deals/{{ deal.id }}/deliverables" method="post" style="margin-top:14px">
+                <input name="title" placeholder="e.g. 2 Instagram Reels" required>
+                <input name="deadline" type="date" style="max-width:170px">
+                <button class="btn small" type="submit">Add</button>
+            </form>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Deal details</h2></div>
+            <form class="form-stack" action="/deals/{{ deal.id }}" method="post">
+                <div class="grid-2">
+                    <div class="field"><label for="d-brand">Brand</label><input id="d-brand" name="brand_name" value="{{ deal.brand_name }}" required></div>
+                    <div class="field"><label for="d-camp">Campaign</label><input id="d-camp" name="campaign_name" value="{{ deal.campaign_name }}" required></div>
+                </div>
+                <div class="field"><label for="d-desc">Description</label><input id="d-desc" name="description" value="{{ deal.description or '' }}"></div>
+                <div class="grid-2">
+                    <div class="field"><label for="d-value">Value</label><input id="d-value" name="deal_value" type="number" step="0.01" value="{{ deal.deal_value or 0 }}"></div>
+                    <div class="field"><label for="d-pay">Payment status</label><select id="d-pay" name="payment_status">{% for s in ['not_invoiced','invoiced','pending','paid','overdue'] %}<option value="{{ s }}" {% if deal.payment_status.value == s %}selected{% endif %}>{{ s.replace('_',' ')|title }}</option>{% endfor %}</select></div>
+                </div>
+                <div class="grid-2">
+                    <div class="field"><label for="d-deadline">Campaign deadline</label><input id="d-deadline" name="deadline" type="date" value="{{ deal.deadline.strftime('%Y-%m-%d') if deal.deadline else '' }}"></div>
+                    <div class="field"><label for="d-due">Payment due</label><input id="d-due" name="payment_due_date" type="date" value="{{ deal.payment_due_date.strftime('%Y-%m-%d') if deal.payment_due_date else '' }}"></div>
+                </div>
+                <div class="field"><label for="d-next">Next action</label><input id="d-next" name="next_action" value="{{ deal.next_action or '' }}"></div>
+                <div class="grid-2">
+                    <div class="field"><label for="d-follow">Follow-up date</label><input id="d-follow" name="follow_up_date" type="date" value="{{ deal.follow_up_date.strftime('%Y-%m-%d') if deal.follow_up_date else '' }}"></div>
+                    <div class="field"><label for="d-terms">Payment terms</label><input id="d-terms" name="payment_terms" value="{{ deal.payment_terms or '' }}" placeholder="Net 30"></div>
+                </div>
+                <div class="grid-2">
+                    <div class="field"><label for="d-contact">Contact</label><input id="d-contact" name="contact_name" value="{{ deal.contact_name or '' }}"></div>
+                    <div class="field"><label for="d-email">Contact email</label><input id="d-email" name="contact_email" type="email" value="{{ deal.contact_email or '' }}"></div>
+                </div>
+                <div class="field"><label for="d-notes">Notes</label><textarea id="d-notes" name="notes">{{ deal.notes or '' }}</textarea></div>
+                <button class="btn" type="submit">Save deal</button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Payment</h2><a class="link" href="/money">Money centre</a></div>
+            <div class="breakdown">
+                <div class="breakdown-row"><span>Deal value</span><strong>{{ money(deal.deal_value) }}</strong></div>
+                <div class="breakdown-row"><span>Status</span><strong>{{ deal.payment_status.value|replace('_',' ') }}</strong></div>
+                {% if deal.payment_due_date %}<div class="breakdown-row"><span>Due</span><strong>{{ deal.payment_due_date.strftime("%b %d") }}</strong></div>{% endif %}
+            </div>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Linked tasks</h2><span class="section-note">{{ tasks|length }}</span></div>
+            {% if tasks %}
+            <div class="two-col-list">
+                {% for t in tasks %}
+                <div class="mini-row"><div><strong>{{ t.title }}</strong><small>{{ t.status.value }}</small></div>
+                <form action="/workflow/{{ t.id }}/complete" method="post"><button class="btn ghost small" type="submit">Done</button></form></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">No tasks linked to this deal yet.</p>
+            {% endif %}
+            <form class="toolbar" action="/quick" method="post" style="margin-top:12px">
+                <input type="hidden" name="type" value="task">
+                <input type="hidden" name="title" value="Follow up with {{ deal.brand_name }}">
+                <button class="btn ghost small" type="submit">Add follow-up task</button>
+            </form>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Writing assistant</h2></div>
+            <a class="btn ghost small" href="/assistant?action=follow_up&subject={{ deal.brand_name|urlencode }}">Draft a follow-up</a>
+        </section>
+    </aside>
+</div>
+{% endblock %}

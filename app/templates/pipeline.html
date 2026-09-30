@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Pipeline board{% endblock %}
+{% block page_id %}pipeline{% endblock %}
+{% block breadcrumb %}Content / Pipeline{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Production, at a glance</p><h1>Pipeline board</h1><p class="page-subtitle">Where everything you are making currently sits.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/content">Back to list</a></div>
+</header>
+
+<div class="pipeline">
+    {% for stage in stages %}
+    <section class="pipeline-col">
+        <h3>{{ stage }} <span>{{ columns[stage]|length }}</span></h3>
+        {% for item in columns[stage] %}
+        <article class="pipeline-card">
+            <h4><a class="link" href="/content/{{ item.id }}">{{ item.title }}</a></h4>
+            <small>{{ item.platform.value }} · {{ item.content_type.value }}</small>
+            {% if item.due_date %}<small>Due {{ item.due_date.strftime("%b %d") }}</small>{% endif %}
+            <form action="/content/{{ item.id }}/status" method="post" style="margin-top:8px">
+                <select name="status" class="inline-select" aria-label="Move {{ item.title }}">
+                    {% for target in stages %}<option value="{{ target }}" {% if target == stage %}selected{% endif %}>{{ target }}</option>{% endfor %}
+                </select>
+                <button class="btn ghost small" type="submit">Move</button>
+            </form>
+        </article>
+        {% else %}
+        <p class="section-note">Empty</p>
+        {% endfor %}
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Goals{% endblock %}
+{% block page_id %}goals{% endblock %}
+{% block breadcrumb %}Goals{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Targets, not wishes</p><h1>Goals</h1><p class="page-subtitle">Live metrics recomputed from your own records. If the number moves on its own, the goal is real.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/reviews/monthly">Monthly review</a></div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your goals</h2><span class="section-note">{{ goals|length }} total</span></div>
+        {% if goals %}
+        <div class="list-stack">
+            {% for g in goals %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3>{{ g.title }}</h3>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ categories.get(g.category, g.category) }}</span>
+                        <span class="badge {{ g.status }}">{{ g.status }}</span>
+                        {% if g.deadline %}<span class="section-note">by {{ g.deadline.strftime("%b %d, %Y") }}</span>{% endif %}
+                        {% if g.metric %}<span class="section-note">auto: {{ g.metric.replace('_', ' ') }}</span>{% endif %}
+                    </div>
+                    <div class="progress"><span style="width: {{ progress[g.id] }}%"></span></div>
+                    <p class="section-note">{{ progress[g.id]|round(0, 'floor')|int }}% of {{ g.target_value }}{% if g.unit %} {{ g.unit }}{% endif %}{% if g.notes %} · {{ g.notes }}{% endif %}</p>
+                </div>
+                <div class="inline-action">
+                    <form class="inline-form" action="/goals/{{ g.id }}/update" method="post">
+                        <input name="current_value" type="number" step="0.01" value="{{ g.current_value }}" aria-label="Current value for {{ g.title }}" style="max-width:110px">
+                        <select name="status" class="inline-select" aria-label="Status for {{ g.title }}">
+                            {% for s in ['active', 'achieved', 'paused', 'archived'] %}<option value="{{ s }}" {% if g.status == s %}selected{% endif %}>{{ s|title }}</option>{% endfor %}
+                        </select>
+                        <button class="btn ghost small" type="submit">Save</button>
+                    </form>
+                    <form action="/goals/{{ g.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◎</div>
+            <strong>No goals set</strong>
+            <p>A goal here is a number with a deadline and a source in your own data. Start with one you can measure this month.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Set a goal</h2>
+        <p>Pick a metric and Creator OS will keep the current value up to date for you.</p>
+        <form class="form-stack" action="/goals" method="post">
+            <div class="field"><label for="g-title">Goal</label><input id="g-title" name="title" required placeholder="e.g. Earn $3,000 this month"></div>
+            <div class="field"><label for="g-cat">Category</label><select id="g-cat" name="category">{% for key, label in categories.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="g-metric">Auto-track from</label>
+                <select id="g-metric" name="metric">
+                    <option value="">Track manually</option>
+                    <option value="monthly_revenue">Revenue received this month</option>
+                    <option value="published_items">Content published this month</option>
+                    <option value="closed_deals">Deals completed</option>
+                    <option value="paid_deals">Deals paid</option>
+                </select>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label for="g-target">Target</label><input id="g-target" name="target_value" type="number" step="0.01" value="0"></div>
+                <div class="field"><label for="g-unit">Unit</label><input id="g-unit" name="unit" placeholder="USD, posts, deals"></div>
+            </div>
+            <div class="field"><label for="g-deadline">Deadline</label><input id="g-deadline" name="deadline" type="date"></div>
+            <div class="field"><label for="g-notes">Why</label><input id="g-notes" name="notes" placeholder="Optional note"></div>
+            <button class="btn" type="submit">Create goal</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

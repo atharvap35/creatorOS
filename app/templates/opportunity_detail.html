@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }}{% endblock %}
+{% block page_id %}opportunity-detail{% endblock %}
+{% block breadcrumb %}Growth / Opportunities / {{ item.title }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ item.type.value }} · {{ item.status.value|replace('_',' ') }}</p>
+        <h1>{{ item.title }}</h1>
+        <p class="page-subtitle">{{ item.description or "Add a description so the radar has something to rank." }}</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/growth/opportunities">Back</a>
+        <form action="/growth/opportunities/{{ item.id }}/to-deal" method="post"><button class="btn small" type="submit">Convert to deal</button></form>
+    </div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Opportunity details</h2></div>
+        <form class="form-stack" action="/growth/opportunities/{{ item.id }}" method="post">
+            <div class="field"><label for="od-title">Title</label><input id="od-title" name="title" value="{{ item.title }}" required></div>
+            <div class="field"><label for="od-desc">Description</label><textarea id="od-desc" name="description">{{ item.description or '' }}</textarea></div>
+            <div class="grid-2">
+                <div class="field"><label for="od-status">Status</label><select id="od-status" name="status">{% for s in ['idea', 'evaluating', 'active', 'pursuing', 'rejected', 'completed'] %}<option value="{{ s }}" {% if item.status.value == s %}selected{% endif %}>{{ s|replace('_',' ')|title }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="od-value">Estimated value</label><input id="od-value" name="estimated_value" type="number" step="0.01" value="{{ item.estimated_value or 0 }}"></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label for="od-effort">Effort</label><select id="od-effort" name="effort">{% for e in ['low','medium','high'] %}<option value="{{ e }}" {% if item.effort.value == e %}selected{% endif %}>{{ e|title }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="od-potential">Potential</label><select id="od-potential" name="potential">{% for p in ['low','medium','high'] %}<option value="{{ p }}" {% if item.potential.value == p %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label for="od-conf">Confidence</label><select id="od-conf" name="confidence">{% for c in ['low','medium','high'] %}<option value="{{ c }}" {% if item.confidence == c %}selected{% endif %}>{{ c|title }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="od-deadline">Deadline</label><input id="od-deadline" name="deadline" type="date" value="{{ item.deadline.strftime('%Y-%m-%d') if item.deadline else '' }}"></div>
+            </div>
+            <div class="field"><label for="od-next">Next action</label><input id="od-next" name="next_action" value="{{ item.next_action or '' }}"></div>
+            <div><button class="btn" type="submit">Save opportunity</button></div>
+        </form>
+    </section>
+
+    <aside class="stack">
+        {% if ranking %}
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Priority</h2><div class="score-ring">{{ ranking.score }}</div></div>
+            <p class="section-note">{{ ranking.why }}</p>
+        </section>
+        {% endif %}
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Move it forward</h2></div>
+            <p class="section-note">Converting creates a real deal with the brand and campaign split from your title, plus a follow-up task.</p>
+            <form action="/growth/opportunities/{{ item.id }}/to-deal" method="post"><button class="btn small" type="submit">Convert to deal</button></form>
+        </section>
+    </aside>
+</div>
+{% endblock %}

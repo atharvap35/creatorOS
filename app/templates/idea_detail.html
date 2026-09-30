@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ idea.title }}{% endblock %}
+{% block page_id %}idea-detail{% endblock %}
+{% block breadcrumb %}Ideas / {{ idea.title }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Idea lab</p><h1>{{ idea.title }}</h1><p class="page-subtitle">{{ idea.problem or idea.description or "No problem statement yet — that is usually the reason an idea stalls." }}</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/ideas">Back to ideas</a></div>
+</header>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Turn into content</h2><span class="section-note">Creates the content record, the brief, and the first production task</span></div>
+            {% if converted %}
+            <p class="section-note">Already converted. Open the content plan to keep working on it.</p>
+            <a class="btn small" href="/content/{{ converted.id }}">Open “{{ converted.title }}”</a>
+            {% else %}
+            <form class="form-stack" action="/ideas/{{ idea.id }}/turn-into-content" method="post">
+                <div class="grid-2">
+                    <div class="field"><label for="t-platform">Platform</label><select id="t-platform" name="platform"><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="x">X</option><option value="newsletter">Newsletter</option><option value="other">Other</option></select></div>
+                    <div class="field"><label for="t-type">Suggested format</label><select id="t-type" name="content_type"><option value="reel">Reel</option><option value="short">Short</option><option value="video">Video</option><option value="carousel">Carousel</option><option value="post">Post</option><option value="newsletter">Newsletter</option><option value="other">Other</option></select></div>
+                </div>
+                <div class="field"><label for="t-due">Production deadline</label><input id="t-due" name="due_date" type="date"></div>
+                <div><button class="btn" type="submit">Create content plan</button></div>
+            </form>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Move this idea on</h2></div>
+            <form class="toolbar" action="/ideas/{{ idea.id }}/status" method="post">
+                <select name="status">
+                    <option value="backlog">Backlog</option>
+                    <option value="exploring">Exploring</option>
+                    <option value="validated">Validated</option>
+                    <option value="converted">Converted</option>
+                    <option value="archived">Archived</option>
+                </select>
+                <button class="btn small" type="submit">Update</button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Idea score</h2><div class="score-ring">{{ score.score }}</div></div>
+            <div class="breakdown">
+                {% for part in score.parts %}
+                <div class="breakdown-row"><span>{{ part.label }} — {{ part.value }}</span><strong>+{{ part.points }}</strong></div>
+                {% endfor %}
+            </div>
+            <p class="section-note" style="margin-top:12px">Every point comes from a field you control. Change the values and the score moves.</p>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Details</h2></div>
+            <div class="breakdown">
+                <div class="breakdown-row"><span>Status</span><strong>{{ idea.status.value }}</strong></div>
+                <div class="breakdown-row"><span>Type</span><strong>{{ idea.type.value }}</strong></div>
+                <div class="breakdown-row"><span>Audience</span><strong>{{ idea.audience or "—" }}</strong></div>
+                <div class="breakdown-row"><span>Monetization</span><strong>{{ idea.monetization_potential }}</strong></div>
+            </div>
+            <form action="/ideas/{{ idea.id }}/delete" method="post" style="margin-top:14px"><button class="btn ghost small danger" type="submit">Delete idea</button></form>
+        </section>
+    </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Action result{% endblock %}
+{% block page_id %}action-result{% endblock %}
+{% block breadcrumb %}Action result{% endblock %}
+{% block content %}
+<section class="clay-card card-pad action-result">
+    {% if result.ok %}
+        <div class="result-mark ok">✓</div>
+        <h1>{{ result.message }}</h1>
+    {% else %}
+        <div class="result-mark fail">!</div>
+        <h1>That action could not run</h1>
+        <p class="page-subtitle">{{ result.message }}</p>
+    {% endif %}
+
+    {% if result.draft %}
+    <div class="draft-box">
+        <div class="section-head">
+            <h2>Draft for your review</h2>
+            <span class="section-note">written by {{ result.provider or 'system' }}</span>
+        </div>
+        <p class="section-note">Nothing was sent or saved. Edit it, then send it yourself.</p>
+        <textarea class="draft-text" rows="14" readonly>{{ result.draft }}</textarea>
+        <div class="empty-actions">
+            <button class="btn ghost small" type="button" data-copy-target="textarea.draft-text">Copy draft</button>
+            <a class="btn ghost small" href="{{ fallback }}">Back</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-actions">
+        <a class="btn ghost small" href="{{ fallback }}">Back</a>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

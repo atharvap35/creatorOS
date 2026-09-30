@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Quick capture{% endblock %}
+{% block page_id %}quick{% endblock %}
+{% block breadcrumb %}Quick capture{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Capture, then organise later</p><h1>Quick capture</h1><p class="page-subtitle">One field, one decision. Everything else can wait until you have time for it.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/today">Back to Today</a></div>
+</header>
+
+<div class="tabs">
+    {% for key, meta in types.items() %}
+    <a class="tab{% if capture_type == key %} active{% endif %}" href="/quick?type={{ key }}">{{ meta.label }}</a>
+    {% endfor %}
+</div>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>{{ types[capture_type].label }}</h2><span class="section-note">{{ types[capture_type].hint }}</span></div>
+        <form class="form-stack" action="/quick" method="post">
+            <input type="hidden" name="type" value="{{ capture_type }}">
+
+            {% if capture_type == 'idea' %}
+            <div class="field"><label for="q-title">Idea</label><input id="q-title" name="title" required placeholder="One line is enough"></div>
+            <div class="field"><label for="q-body">Why might it work?</label><textarea id="q-body" name="body" rows="5"></textarea></div>
+            <div class="field"><label for="q-cat">Type</label><select id="q-cat" name="category"><option value="content">Content</option><option value="product">Product</option><option value="affiliate">Affiliate</option><option value="sponsorship">Sponsorship</option><option value="service">Service</option><option value="membership">Membership</option><option value="other">Other</option></select></div>
+
+            {% elif capture_type == 'content' %}
+            <div class="field"><label for="q-title">Working title</label><input id="q-title" name="title" required></div>
+            <div class="field"><label for="q-body">Notes</label><textarea id="q-body" name="body" rows="4"></textarea></div>
+            <div class="grid-2">
+                <div class="field"><label for="q-platform">Platform</label><select id="q-platform" name="platform">{% for p in ['instagram','youtube','tiktok','linkedin','x','newsletter','other'] %}<option value="{{ p }}" {% if p == defaults.platform %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="q-cat">Format</label><select id="q-cat" name="category">{% for f in ['reel','short','video','carousel','post','story','newsletter','other'] %}<option value="{{ f }}" {% if f == defaults.format %}selected{% endif %}>{{ f|title }}</option>{% endfor %}</select></div>
+            </div>
+
+            {% elif capture_type == 'task' %}
+            <div class="field"><label for="q-title">Next step</label><input id="q-title" name="title" required placeholder="Start with a verb"></div>
+            <div class="field"><label for="q-body">Context</label><textarea id="q-body" name="body" rows="4"></textarea></div>
+            <div class="field"><label for="q-cat">Category</label><select id="q-cat" name="category"><option value="content">Content</option><option value="business">Business</option><option value="monetization">Monetization</option><option value="audience">Audience</option><option value="admin">Admin</option></select></div>
+
+            {% elif capture_type == 'deal' %}
+            <div class="field"><label for="q-title">Brand</label><input id="q-title" name="title" required></div>
+            <div class="field"><label for="q-body">Campaign</label><input id="q-body" name="body" placeholder="e.g. Summer launch"></div>
+            <div class="field"><label for="q-amount">Value</label><input id="q-amount" name="amount" type="number" step="0.01" value="0"></div>
+
+            {% elif capture_type == 'revenue' %}
+            <div class="field"><label for="q-title">Reference</label><input id="q-title" name="title" required placeholder="e.g. Acme invoice 104"></div>
+            <div class="field"><label for="q-body">Description</label><input id="q-body" name="body"></div>
+            <div class="field"><label for="q-amount">Amount</label><input id="q-amount" name="amount" type="number" step="0.01" required></div>
+            <div class="field"><label for="q-cat">Source</label><select id="q-cat" name="category"><option value="sponsorship">Sponsorship</option><option value="affiliate">Affiliate</option><option value="digital_product">Digital product</option><option value="membership">Membership</option><option value="services">Services</option><option value="ads">Ads</option><option value="other">Other</option></select></div>
+
+            {% else %}
+            <div class="field"><label for="q-title">Opportunity</label><input id="q-title" name="title" required placeholder="Use “Brand — campaign” to convert it cleanly"></div>
+            <div class="field"><label for="q-body">Why it might work</label><textarea id="q-body" name="body" rows="4"></textarea></div>
+            <div class="grid-2">
+                <div class="field"><label for="q-amount">Estimated value</label><input id="q-amount" name="amount" type="number" step="0.01" value="0"></div>
+                <div class="field"><label for="q-cat">Type</label><select id="q-cat" name="category"><option value="sponsorship">Sponsorship</option><option value="affiliate">Affiliate</option><option value="digital_product">Digital product</option><option value="service">Service</option><option value="membership">Membership</option><option value="content_monetization">Content monetization</option><option value="other">Other</option></select></div>
+            </div>
+            {% endif %}
+
+            <button class="btn" type="submit">Save to {{ types[capture_type].label|lower }}</button>
+        </form>
+    </section>
+
+    <aside class="clay-card card-pad">
+        <div class="section-head"><h2>Your defaults</h2><span class="section-note">from onboarding</span></div>
+        <div class="breakdown">
+            <div class="breakdown-row"><span>Platforms</span><strong>{{ pref.platform_list()|join(', ') or '—' }}</strong></div>
+            <div class="breakdown-row"><span>Formats</span><strong>{{ pref.format_list()|join(', ') or '—' }}</strong></div>
+            <div class="breakdown-row"><span>Capacity</span><strong>{{ pref.daily_capacity_hours }}h/day</strong></div>
+            <div class="breakdown-row"><span>Primary goal</span><strong>{{ (pref.primary_goal or '—')|replace('_', ' ') }}</strong></div>
+        </div>
+        <a class="btn ghost small" style="margin-top:14px" href="/onboarding">Update preferences</a>
+    </aside>
+</div>
+{% endblock %}

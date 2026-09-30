@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Opportunities{% endblock %}
+{% block page_id %}opportunities{% endblock %}
+{% block breadcrumb %}Growth / Opportunities{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Ranked, with reasons</p><h1>Opportunity radar</h1><p class="page-subtitle">Each opportunity is scored from signals you control: value, effort, deadline, and whether a next action exists.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/growth">Back to growth</a></div>
+</header>
+
+<form class="toolbar" method="get" action="/growth/opportunities">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search opportunities…">
+    <button class="btn small" type="submit">Search</button>
+    {% if q %}<a class="link" href="/growth/opportunities">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Prioritised</h2><span class="section-note">{{ ranked|length }} in play</span></div>
+        {% if ranked %}
+        <div class="list-stack">
+            {% for r in ranked %}
+            <article class="list-card">
+                <div class="score-ring" title="Priority {{ r.score }}">{{ r.score }}</div>
+                <div class="list-card-content">
+                    <h3><a class="link" href="/growth/opportunities/{{ r.item.id }}">{{ r.item.title }}</a></h3>
+                    {% if r.item.description %}<p>{{ r.item.description }}</p>{% endif %}
+                    <p class="focus-reason">{{ r.why }}</p>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ r.item.type.value }}</span>
+                        <span class="badge {{ r.item.status.value }}">{{ r.item.status.value|replace('_',' ') }}</span>
+                        <span class="badge {{ r.item.potential.value }}">potential {{ r.item.potential.value }}</span>
+                        <span class="badge {{ r.item.effort.value }}">effort {{ r.item.effort.value }}</span>
+                        {% if r.item.estimated_value %}<span class="section-note">≈ {{ money(r.item.estimated_value) }}</span>{% endif %}
+                    </div>
+                </div>
+                <form action="/growth/opportunities/{{ r.item.id }}/to-deal" method="post"><button class="btn ghost small" type="submit">Convert to deal</button></form>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">↗</div>
+            <strong>No opportunities in play</strong>
+            <p>The radar ranks what you capture. Add three you could realistically pursue this month.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="stack">
+        <section class="form-card clay-card">
+            <h2>Capture an opportunity</h2>
+            <p>Use “Brand — campaign” so converting it to a deal is clean.</p>
+            <form class="form-stack" action="/opportunities" method="post">
+                <div class="field"><label for="o-title">Opportunity</label><input id="o-title" name="title" required placeholder="e.g. Acme — Summer launch"></div>
+                <div class="field"><label for="o-desc">Why it might work</label><textarea id="o-desc" name="description" rows="3"></textarea></div>
+                <div class="field"><label for="o-type">Type</label><select id="o-type" name="type">{% for key, label in categories.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+                <div class="grid-2">
+                    <div class="field"><label for="o-value">Estimated value</label><input id="o-value" name="estimated_value" type="number" step="0.01" value="0"></div>
+                    <div class="field"><label for="o-effort">Effort</label><select id="o-effort" name="effort"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                </div>
+                <div class="field"><label for="o-potential">Potential</label><select id="o-potential" name="potential"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                <div class="field"><label for="o-next">Next action</label><input id="o-next" name="next_action" placeholder="Send the rate card"></div>
+                <button class="btn" type="submit">Add opportunity</button>
+            </form>
+        </section>
+
+        {% if all_items %}
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>All tracked</h2><span class="section-note">{{ all_items|length }}</span></div>
+            <div class="two-col-list">
+                {% for o in all_items %}
+                <div class="mini-row">
+                    <div><strong>{{ o.title }}</strong><small>{{ o.status.value|replace('_',' ') }}</small></div>
+                    <div class="row-actions">
+                        <a class="link" href="/growth/opportunities/{{ o.id }}">Open</a>
+                        <form action="/growth/opportunities/{{ o.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">×</button></form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button, action_buttons, rationale, basis with context %}
+{% block title %}Today{% endblock %}
+{% block page_id %}today{% endblock %}
+{% block breadcrumb %}Today{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ now.strftime('%A, %d %B') }}</p>
+        <h1>Good to see you, {{ user.name.split(' ')[0] }}</h1>
+        <p class="page-subtitle">{{ attention_summary.headline }}{% if attention_summary.money_at_risk %} · {{ money(attention_summary.money_at_risk|round(0)|int) }} unpaid{% endif %}</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/attention">Attention Center</a>
+        <a class="btn ghost small" href="/timeline">Timeline</a>
+    </div>
+</header>
+
+{# ---------------------------------------------------------------------------
+   1. One decision. The single highest-value thing, and why it beats the rest.
+   --------------------------------------------------------------------------- #}
+{% if one_thing %}
+<section class="clay-card card-pad one-decision">
+    <div class="section-head">
+        <p class="eyebrow">Do this first</p>
+        <span class="section-note">fits in ~{{ one_thing.effort_minutes }} min</span>
+    </div>
+    <h2 class="one-title">{{ one_thing.what or one_thing.title }}</h2>
+    <p class="one-why">{{ one_thing.why or one_thing.reason }}</p>
+    <div class="one-impact">
+        <p><strong>Impact:</strong> {{ one_thing.benefit }}</p>
+        <p><strong>If it slips:</strong> {{ one_thing.consequence }}</p>
+    </div>
+    <div class="one-actions">
+        {% if one_thing.actions %}
+            {{ action_buttons(one_thing.actions, one_thing.entity_type, one_thing.entity_id, next_url='/today') }}
+        {% endif %}
+        <a class="btn ghost small" href="{{ one_thing.url }}">Open {{ one_thing.cta or 'detail' }}</a>
+    </div>
+    <details class="score-details">
+        <summary>Why this ranked first</summary>
+        <p class="section-note">{{ one_thing.score_breakdown }}</p>
+        {{ basis('system-derived') }}
+    </details>
+</section>
+{% else %}
+<section class="clay-card card-pad one-decision">
+    <p class="eyebrow">Do this first</p>
+    <h2 class="one-title">Nothing is on fire</h2>
+    <p class="one-why">No overdue payments, no stuck deliverables, no deadlines passed. This is a good day to start the next thing rather than clear a list that is already clear.</p>
+    <div class="one-actions">
+        <a class="btn ghost small" href="/ideas">Turn an idea into content</a>
+        <a class="btn ghost small" href="/copilot">Ask what to work on</a>
+    </div>
+</section>
+{% endif %}
+
+{# ---------------------------------------------------------------------------
+   2. Three next moves, each fully explained and actionable.
+   --------------------------------------------------------------------------- #}
+{% if next_moves %}
+<section class="next-moves">
+    <div class="section-head">
+        <h2>Then, in this order</h2>
+        <span class="section-note">ranked by urgency, impact and effort</span>
+    </div>
+    <div class="move-grid">
+        {% for m in next_moves %}
+        <article class="clay-card card-pad move-card">
+            <div class="move-rank">{{ loop.index }}</div>
+            <h3>{{ m.what or m.title }}</h3>
+            {{ rationale(m) }}
+            <div class="move-actions">
+                {% if m.actions %}{{ action_buttons(m.actions, m.entity_type, m.entity_id, next_url='/today') }}{% endif %}
+                <a class="btn ghost small" href="{{ m.url }}">Open</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<div class="today-grid">
+    {# ------------------------------------------------------------------------
+       3. Attention: what is slipping, and what it is costing.
+       ------------------------------------------------------------------------ #}
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>Needs attention</h2>
+            <a class="section-note link" href="/attention">See all {{ attention_summary.total }}</a>
+        </div>
+        {% if attention_items %}
+        <div class="list-stack">
+            {% for item in attention_items %}
+            <article class="attention-row" data-severity="{{ item.severity }}">
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <p class="section-note">{{ item.detail }}</p>
+                </div>
+                <div class="inline-action">
+                    {% if item.action and item.entity_id %}
+                        {{ action_button(item.action, item.action.replace('_', ' ')|title, item.entity_type, item.entity_id, next_url='/today') }}
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-inline">Nothing is slipping. <a href="/copilot">Ask what to do instead.</a></div>
+        {% endif %}
+    </section>
+
+    {# ------------------------------------------------------------------------
+       4. Money: received, outstanding, and the concrete routes to more.
+       ------------------------------------------------------------------------ #}
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>Money</h2>
+            <span class="section-note">from your own records</span>
+        </div>
+        <div class="stat-row">
+            <div class="stat">
+                <span class="stat-label">This month</span>
+                <span class="stat-value">{{ money(cash.this_month|round(0)|int) }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Outstanding</span>
+                <span class="stat-value {{ 'warn' if cash.overdue_total }}">{{ money(cash.outstanding|round(0)|int) }}</span>
+            </div>
+        </div>
+        {% if cash.overdue_total %}
+        <p class="section-note">{{ money(cash.overdue_total|round(0)|int) }} of that is overdue.</p>
+        {% endif %}
+
+        {% if money_on_the_table %}
+        <h3 class="subsection">Routes to more money</h3>
+        <ul class="plain-list money-list">
+            {% for row in money_on_the_table %}
+            {% if row.value %}
+            <li>
+                <div>
+                    <strong>{{ row.label }}</strong>
+                    <span class="section-note">{{ row.reason }} · ~{{ row.effort_minutes }} min</span>
+                </div>
+                <div class="money-list-side">
+                    <span class="stat-value small">{{ money(row.value|round(0)|int) }}</span>
+                    <a class="btn ghost small" href="{{ row.url }}">Open</a>
+                </div>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    {# ------------------------------------------------------------------------
+       5. Capacity: honest about what actually fits.
+       ------------------------------------------------------------------------ #}
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>This week</h2>
+            <a class="section-note link" href="/workflow?view=week">Workflow</a>
+        </div>
+        <p class="section-note">{{ capacity.explanation }}</p>
+        <div class="progress"><span style="width: {{ [capacity.capacity_pct, 100]|min }}%"></span></div>
+        <div class="stat-row">
+            <div class="stat"><span class="stat-label">Planned</span><span class="stat-value small">{{ capacity.planned_hours }}h</span></div>
+            <div class="stat"><span class="stat-label">Available</span><span class="stat-value small">{{ capacity.available_hours }}h</span></div>
+        </div>
+        {% if capacity.over_capacity %}
+        <form action="/action/rebalance_week" method="post">
+            <input type="hidden" name="next" value="/today">
+            <button class="btn ghost small" type="submit">Rebalance week</button>
+        </form>
+        {% endif %}
+    </section>
+
+    {# ------------------------------------------------------------------------
+       6. Recently: the real history, newest first.
+       ------------------------------------------------------------------------ #}
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>Recently</h2>
+            <a class="section-note link" href="/timeline">Timeline</a>
+        </div>
+        {% if recent_events %}
+        <ul class="plain-list event-list">
+            {% for e in recent_events %}
+            <li><span class="badge">{{ e.kind }}</span> {{ e.title }} <span class="section-note">{{ e.occurred_at.strftime('%b %d') }}</span></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-inline">Nothing recorded yet. <a href="/ideas">Convert an idea</a> to start your timeline.</div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

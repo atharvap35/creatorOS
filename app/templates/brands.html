@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button, basis with context %}
+{% block title %}Brands{% endblock %}
+{% block page_id %}brands{% endblock %}
+{% block breadcrumb %}Brands{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Relationships, not a list of logos</p>
+        <h1>Brands</h1>
+        <p class="page-subtitle">A brand holds every deal, contact and payment for one company. {{ money(total_revenue|round(0)|int) }} received in total{% if total_outstanding %}, {{ money(total_outstanding|round(0)|int) }} still outstanding{% endif %}.</p>
+    </div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your brand relationships</h2><span class="section-note">{{ brands|length }} brand{{ '' if brands|length == 1 else 's' }}</span></div>
+        {% if brands %}
+        <div class="list-stack">
+            {% for p in brands %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3><a href="/brands/{{ p.brand.id }}">{{ p.brand.name }}</a></h3>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ p.brand.relationship_status or 'prospect' }}</span>
+                        {% if p.brand.contact_name %}<span class="section-note">{{ p.brand.contact_name }}</span>{% endif %}
+                        {% if p.days_since is not none %}<span class="section-note">last touch {{ p.days_since }}d ago</span>{% endif %}
+                    </div>
+                    <p class="section-note">
+                        {{ p.deal_count }} deal{{ '' if p.deal_count == 1 else 's' }} ·
+                        {{ money(p.revenue_total|round(0)|int) }} received
+                        {% if p.outstanding %} · {{ money(p.outstanding|round(0)|int) }} outstanding{% endif %}
+                    </p>
+                </div>
+                <div class="inline-action">
+                    <a class="btn ghost small" href="/brands/{{ p.brand.id }}">Open</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◇</div>
+            <strong>No brands yet</strong>
+            <p>Add a brand to tie its deals, contacts and payments together. Existing deals can be linked by name.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add a brand</h2>
+        <p>Everything here is yours to enter. Nothing is imported from an ad platform.</p>
+        <form class="form-stack" action="/brands" method="post">
+            <div class="field"><label for="b-name">Brand name</label><input id="b-name" name="name" required placeholder="e.g. Acme Brand"></div>
+            <div class="field"><label for="b-site">Website</label><input id="b-site" name="website" placeholder="optional"></div>
+            <div class="field"><label for="b-contact">Contact name</label><input id="b-contact" name="contact_name"></div>
+            <div class="field"><label for="b-email">Contact email</label><input id="b-email" name="contact_email" type="email"></div>
+            <div class="field"><label for="b-status">Relationship</label>
+                <select id="b-status" name="relationship_status">{% for s in states %}<option value="{{ s }}">{{ s|capitalize }}</option>{% endfor %}</select>
+            </div>
+            <div class="field"><label for="b-notes">Notes</label><textarea id="b-notes" name="notes" rows="3"></textarea></div>
+            <button class="btn" type="submit">Add brand</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

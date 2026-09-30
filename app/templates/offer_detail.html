@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ offer.name }}{% endblock %}
+{% block page_id %}offer-detail{% endblock %}
+{% block breadcrumb %}Offers / {{ offer.name }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ offer.offer_type }}</p>
+        <h1>{{ offer.name }}</h1>
+        <p class="page-subtitle">{{ money((offer.price or 0)|round(0)|int) }}{% if offer.turnaround_days %} · {{ offer.turnaround_days }} day turnaround{% endif %}</p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/offers">All offers</a></div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Deals using this offer</h2><span class="section-note">{{ deals|length }} total</span></div>
+        {% if deals %}
+        <div class="list-stack">
+            {% for d in deals %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3><a href="/deals/{{ d.id }}">{{ d.campaign_name or d.brand_name }}</a></h3>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ d.stage or d.status.value }}</span>
+                        <span class="badge {{ d.payment_status.value }}">{{ d.payment_status.value|replace('_', ' ') }}</span>
+                    </div>
+                    <p class="section-note">{{ d.currency }} {{ (d.deal_value or 0)|round(0)|int }}</p>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◈</div>
+            <strong>Never sold through this offer</strong>
+            <p>Attach it to a deal, or turn it into an opportunity to find one.</p>
+            <form action="/action/create_opportunity" method="post">
+                <input type="hidden" name="entity_id" value="{{ offer.id }}">
+                <input type="hidden" name="next" value="/offers/{{ offer.id }}">
+                <button class="btn" type="submit">Create an opportunity</button>
+            </form>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="clay-card card-pad">
+        <h2>What the buyer gets</h2>
+        {% if offer.deliverables %}<p>{{ offer.deliverables }}</p>{% else %}<p class="section-note">No deliverables recorded.</p>{% endif %}
+        {% if offer.description %}<h3>Description</h3><p class="section-note">{{ offer.description }}</p>{% endif %}
+        {% if offer.terms %}<h3>Terms</h3><p class="section-note">{{ offer.terms }}</p>{% endif %}
+    </aside>
+</div>
+{% endblock %}

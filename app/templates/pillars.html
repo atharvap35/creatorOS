@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Content pillars{% endblock %}
+{% block page_id %}pillars{% endblock %}
+{% block breadcrumb %}Content / Pillars{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Themes you repeat</p><h1>Content pillars</h1><p class="page-subtitle">Pillars show where your output is concentrated and which theme has gone quiet.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/content">Back to content</a></div>
+</header>
+
+{% if gaps %}
+<section class="clay-card card-pad" style="margin-bottom:22px">
+    <div class="section-head"><h2>Gaps</h2><span class="section-note">{{ gaps|length }} pillar(s) quiet for 30+ days</span></div>
+    <div class="two-col-list">
+        {% for row in gaps %}
+        <div class="mini-row">
+            <div><strong>{{ row.pillar.name }}</strong><small>{% if row.days_since is none %}never published{% else %}last published {{ row.days_since }} day(s) ago{% endif %}</small></div>
+            <a class="btn ghost small" href="/quick?type=content">Plan something</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your mix</h2><span class="section-note">{{ mix|length }} pillar(s)</span></div>
+        {% if mix %}
+        <div class="list-stack">
+            {% for row in mix %}
+            <article class="list-card">
+                <span class="dot" style="background: {{ row.pillar.color or '#7764d8' }}"></span>
+                <div class="list-card-content">
+                    <h3>{{ row.pillar.name }}</h3>
+                    {% if row.pillar.description %}<p>{{ row.pillar.description }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge">{{ row.total }} total</span>
+                        <span class="badge published">{{ row.published }} published</span>
+                        <span class="badge">{{ row.in_flight }} in production</span>
+                        <span class="section-note">{{ row.ideas }} idea(s)</span>
+                        {% if row.last_published %}<span class="section-note">last {{ row.last_published.strftime("%b %d") }}</span>{% else %}<span class="section-note">nothing published yet</span>{% endif %}
+                    </div>
+                </div>
+                <form action="/content/pillars/{{ row.pillar.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◈</div>
+            <strong>No pillars yet</strong>
+            <p>A pillar is a theme you keep returning to. Two or three is usually enough to make your mix legible.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add a pillar</h2>
+        <p>Give it a name you would actually use in conversation.</p>
+        <form class="form-stack" action="/content/pillars" method="post">
+            <div class="field"><label for="p-name">Pillar</label><input id="p-name" name="name" required placeholder="e.g. AI workflows"></div>
+            <div class="field"><label for="p-desc">What it covers</label><input id="p-desc" name="description" placeholder="Optional"></div>
+            <div class="field"><label for="p-color">Colour</label>
+                <select id="p-color" name="color">{% for c in palette %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
+            </div>
+            <button class="btn" type="submit">Add pillar</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

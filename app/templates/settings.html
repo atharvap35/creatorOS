@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Make this space feel like yours</p><h1>Settings</h1><p class="page-subtitle">Your Creator OS workspace, thoughtfully organized.</p></div>
+</header>
+{% if saved %}<div class="alert success">Your changes are saved.</div>{% endif %}
+{% set current_currency = profile.currency if profile and profile.currency else active_currency() %}
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-heading"><h2>Your profile</h2><span class="section-note">Signed in as {{ user.email }}</span></div>
+        <form class="form-stack" action="/settings/profile" method="post">
+            <div class="field"><label for="profile-name">Display name</label><input id="profile-name" name="name" value="{{ profile.name if profile else user.name }}" required></div>
+            <div class="field"><label for="profile-phone">Phone</label><input id="profile-phone" name="phone" value="{{ profile.phone if profile and profile.phone else '' }}" placeholder="Optional"></div>
+            <div class="field"><label for="profile-niche">Niche</label><input id="profile-niche" name="niche" value="{{ profile.niche if profile and profile.niche else '' }}" placeholder="e.g. Technology & Productivity"></div>
+            <div class="field"><label for="profile-bio">Bio</label><textarea id="profile-bio" name="bio" placeholder="A sentence about your work">{{ profile.bio if profile and profile.bio else '' }}</textarea></div>
+            <div class="field"><label for="profile-tz">Timezone</label><select id="profile-tz" name="timezone">{% for tz in timezones %}<option value="{{ tz }}" {% if (profile.timezone if profile and profile.timezone else 'UTC') == tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="profile-currency">Preferred currency</label><select id="profile-currency" name="currency">{% for c in currencies %}<option value="{{ c }}" {% if current_currency == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+            <button type="submit">Save profile <span aria-hidden="true">→</span></button>
+        </form>
+    </section>
+    <aside class="form-card clay-card">
+        <h2>Your workspace</h2>
+        <div class="two-col-list">
+            <div class="mini-row"><div><strong>{{ counts.content }}</strong><small>content pieces</small></div><span class="nav-icon">▤</span></div>
+            <div class="mini-row"><div><strong>{{ counts.tasks }}</strong><small>tasks</small></div><span class="nav-icon">✓</span></div>
+            <div class="mini-row"><div><strong>{{ counts.deals }}</strong><small>brand deals</small></div><span class="nav-icon">◇</span></div>
+            <div class="mini-row"><div><strong>{{ counts.revenue }}</strong><small>revenue entries</small></div><span class="nav-icon">$</span></div>
+            <div class="mini-row"><div><strong>{{ counts.ideas }}</strong><small>ideas</small></div><span class="nav-icon">✳</span></div>
+            <div class="mini-row"><div><strong>{{ counts.opportunities }}</strong><small>opportunities</small></div><span class="nav-icon">↗</span></div>
+        </div>
+        <form action="/settings/seed" method="post" style="margin-top: 18px;">
+            <button class="small secondary" type="submit">Load starter workspace data</button>
+        </form>
+    </aside>
+</div>
+
+<section class="clay-card card-pad">
+    <div class="section-heading">
+        <h2>Your working rhythm</h2>
+        <span class="section-note">every capacity number in the app is computed from this</span>
+    </div>
+    <p class="section-note">
+        Creator OS never guesses how much you can work. Today, the week planner, and every
+        overcapacity warning are derived from the hours and days you set here.
+    </p>
+
+    <div class="stat-row" style="margin: 12px 0;">
+        <div class="stat">
+            <span class="stat-label">Planned this week</span>
+            <span class="stat-value small">{{ capacity.planned_hours }}h</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Available</span>
+            <span class="stat-value small">{{ capacity.available_hours }}h</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Capacity used</span>
+            <span class="stat-value small {{ 'bad' if capacity.over_capacity }}">{{ capacity.capacity_pct }}%</span>
+        </div>
+    </div>
+    <p class="section-note">{{ capacity.explanation }}</p>
+
+    <form class="form-stack" action="/settings/capacity" method="post">
+        <div class="field">
+            <label for="cap-days">Working days</label>
+            <div class="chip-row">
+                {% for d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+                {% set chosen = d in (preference.working_days or 'Mon,Tue,Wed,Thu,Fri').split(',') %}
+                <label class="chip" style="cursor: pointer;">
+                    <input type="checkbox" name="working_days" value="{{ d }}" {% if chosen %}checked{% endif %} style="margin-right: 6px;">{{ d }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label for="cap-hours">Hours available per working day</label><input id="cap-hours" name="hours_per_day" type="number" min="0" max="24" value="{{ preference.hours_per_day or 4 }}"></div>
+            <div class="field"><label for="cap-peak">Peak working hour (0–23)</label><input id="cap-peak" name="peak_hour" type="number" min="0" max="23" value="{{ preference.peak_hour if preference.peak_hour is not none else '' }}" placeholder="optional"></div>
+        </div>
+        <div class="grid-2">
+            <div class="field"><label for="cap-target">Monthly revenue target</label><input id="cap-target" name="monthly_revenue_target" type="number" step="0.01" min="0" value="{{ preference.monthly_revenue_target or 0 }}"></div>
+            <div class="field"><label for="cap-series">Default series length</label><input id="cap-series" name="series_length_default" type="number" min="1" max="500" value="{{ preference.series_length_default or '' }}" placeholder="optional"></div>
+        </div>
+        <div class="field"><label for="cap-tz">Timezone used for dates</label><select id="cap-tz" name="timezone">{% for tz in timezones %}<option value="{{ tz }}" {% if (preference.timezone or 'UTC') == tz %}selected{% endif %}>{{ tz }}</option>{% endfor %}</select></div>
+        <button class="btn" type="submit">Save rhythm</button>
+        <p class="section-note">Days are submitted as a comma list; if every box is left unticked the week falls back to Monday–Friday.</p>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button with context %}
+{% block title %}{{ series.name }}{% endblock %}
+{% block page_id %}series-detail{% endblock %}
+{% block breadcrumb %}Series / {{ series.name }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ series.platform or 'Series' }}</p>
+        <h1>{{ series.name }}</h1>
+        <p class="page-subtitle">{% if series.description %}{{ series.description }}{% else %}No description yet.{% endif %}</p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/series">All series</a></div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>Episodes</h2>
+            <span class="section-note">{{ items|length }} planned or published</span>
+        </div>
+        {% if items %}
+        <div class="list-stack">
+            {% for i in items|sort(attribute='episode_number') %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3>{% if i.episode_number %}Ep. {{ i.episode_number }} — {% endif %}<a href="/content/{{ i.id }}">{{ i.title }}</a></h3>
+                    <div class="list-card-meta">
+                        <span class="badge {{ i.status.value }}">{{ i.status.value }}</span>
+                        {% if i.published_at %}<span class="section-note">published {{ i.published_at.strftime('%b %d, %Y') }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="inline-action">
+                    <a class="btn ghost small" href="/content/{{ i.id }}">Open</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">▤</div>
+            <strong>No episodes yet</strong>
+            <p>Planning the next episode fills in the gap automatically and numbers it for you.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="clay-card card-pad">
+        <h2>Next episode</h2>
+        {% if at_target %}
+            <p>You have published every episode in this series' target. Raise the target or mark the series complete.</p>
+        {% elif next_episode %}
+            <p>Episode {{ next_episode }} is the next gap in the sequence.</p>
+            {{ action_button('plan_next_episode', 'Plan episode ' ~ next_episode, 'series', series.id, kind='') }}
+        {% else %}
+            <p>No episodes recorded yet.</p>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

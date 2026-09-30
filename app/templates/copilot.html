@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button with context %}
+{% block title %}Copilot{% endblock %}
+{% block page_id %}copilot{% endblock %}
+{% block breadcrumb %}Copilot{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Answers from your own records — or an honest "I don't know"</p>
+        <h1>Creator Copilot</h1>
+        <p class="page-subtitle">Every number here is read from your content, deals, payments, tasks and goals. It will not invent a metric, and it will not reach the internet.</p>
+    </div>
+</header>
+
+<div class="copilot-layout">
+    <section class="copilot-thread">
+        {% if history %}
+        {% for m in history|reverse %}
+        <article class="copilot-turn">
+            <div class="copilot-question">
+                <span class="copilot-avatar">You</span>
+                <p>{{ m.question }}</p>
+            </div>
+            <div class="copilot-answer">
+                <span class="copilot-avatar bot">c</span>
+                <div class="copilot-body">
+                    {# answers are written with \n for structure; keep them readable #}
+                    <div class="copilot-text">{{ m.answer }}</div>
+                    <div class="copilot-meta">
+                        <span class="badge">{{ m.intent|replace('_', ' ') }}</span>
+                        {% if m.grounded %}
+                            <span class="badge ok">grounded in your data</span>
+                        {% else %}
+                            <span class="badge warn">not enough data</span>
+                        {% endif %}
+                        {% if m.citations %}<span class="section-note">{{ m.citations.split(',')|length }} record(s) cited</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">c</div>
+            <strong>Ask about your business</strong>
+            <p>Start with one of the questions below, or ask your own. If the answer isn't in your records, the copilot will say so instead of guessing.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="copilot-aside">
+        <form class="clay-card card-pad form-stack" action="/copilot/ask" method="post">
+            <h2>Ask a question</h2>
+            <div class="field">
+                <label for="q">Your question</label>
+                <textarea id="q" name="question" rows="3" required placeholder="What should I do this week?"></textarea>
+            </div>
+            <button class="btn" type="submit">Ask</button>
+            <p class="section-note">Answers are saved to your history so the copilot knows what you have already asked.</p>
+        </form>
+
+        <div class="clay-card card-pad">
+            <h2>Try asking</h2>
+            <div class="suggestion-list">
+                {% for s in suggestions %}
+                <form action="/copilot/ask" method="post" class="suggestion-form">
+                    <input type="hidden" name="question" value="{{ s }}">
+                    <button class="suggestion" type="submit">{{ s }}</button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="clay-card card-pad">
+            <h2>What it will not do</h2>
+            <ul class="plain-list">
+                <li>Invent engagement rates, follower counts or benchmarks</li>
+                <li>Predict revenue you have not recorded</li>
+                <li>Change any record without an action you confirm</li>
+            </ul>
+        </div>
+    </aside>
+</div>
+{% endblock %}

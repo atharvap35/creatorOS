@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Money{% endblock %}
+{% block page_id %}money{% endblock %}
+{% block breadcrumb %}Money{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Money centre</p><h1>Money</h1><p class="page-subtitle">What came in, what is still owed, and what your own records project forward.</p></div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/money/payments">Payment tracker</a>
+        <a class="btn ghost small" href="/rate-card">Rate card</a>
+    </div>
+</header>
+
+<div class="stat-grid">
+    <div class="stat-tile"><span class="eyebrow">This month</span><div class="stat-value">{{ money(totals.this_month) }}</div><p class="stat-sub">last month {{ money(totals.last_month) }}</p></div>
+    <div class="stat-tile"><span class="eyebrow">Year to date</span><div class="stat-value">{{ money(totals.ytd) }}</div><p class="stat-sub">across {{ totals.months_tracked }} month(s) of data</p></div>
+    <div class="stat-tile"><span class="eyebrow">Outstanding</span><div class="stat-value">{{ money(totals.outstanding) }}</div><p class="stat-sub">{{ owed|length }} unpaid item(s)</p></div>
+    <div class="stat-tile"><span class="eyebrow">Recurring</span><div class="stat-value">{{ money(totals.recurring) }}</div><p class="stat-sub">received from recurring entries</p></div>
+</div>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Income activity</h2><span class="section-note">{{ revenue|length }} entries</span></div>
+        <form class="toolbar" method="get" action="/money">
+            <select name="status_filter">
+                <option value="">All statuses</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Received</option>
+                <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+            </select>
+            <button class="btn small" type="submit">Filter</button>
+            {% if status_filter %}<a class="link" href="/money">Clear</a>{% endif %}
+        </form>
+
+        {% if revenue %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Source</th><th>Details</th><th>Date</th><th>Due</th><th>Status</th><th>Amount</th><th></th></tr></thead>
+            <tbody>{% for r in revenue %}<tr>
+                <td>{{ r.source.value }}</td>
+                <td>{{ r.description or "—" }}{% if r.recurring %} <span class="badge">recurring</span>{% endif %}</td>
+                <td>{{ r.date.strftime("%b %d, %Y") if r.date else "—" }}</td>
+                <td>{{ r.due_date.strftime("%b %d") if r.due_date else "—" }}</td>
+                <td><span class="badge {{ r.status.value }}">{{ r.status.value }}</span></td>
+                <td>{{ money(r.amount) }}</td>
+                <td><div class="row-actions">
+                    <form class="inline-form" action="/money/{{ r.id }}/status" method="post">
+                        <select name="status" class="inline-select"><option value="pending" {% if r.status.value == 'pending' %}selected{% endif %}>Pending</option><option value="received" {% if r.status.value == 'received' %}selected{% endif %}>Received</option><option value="overdue" {% if r.status.value == 'overdue' %}selected{% endif %}>Overdue</option></select>
+                        <button class="btn ghost small" type="submit">Set</button>
+                    </form>
+                    <form action="/money/{{ r.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">×</button></form>
+                </div></td>
+            </tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">$</div>
+            <strong>No revenue logged yet</strong>
+            <p>Log every payment — sponsorships, affiliate, product sales — and this page becomes your financial picture.</p>
+            <a class="btn small" href="/quick?type=revenue">Log revenue</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Cashflow forecast</h2><span class="section-note">estimates</span></div>
+            <div class="breakdown">
+                <div class="breakdown-row"><span>Outstanding</span><strong>{{ money(forecast.outstanding_total) }}</strong></div>
+                <div class="breakdown-row"><span>Expected within 30 days</span><strong>{{ money(forecast.expected_30) }}</strong></div>
+                <div class="breakdown-row"><span>Expected within 60 days</span><strong>{{ money(forecast.expected_60) }}</strong></div>
+                <div class="breakdown-row"><span>Open deal pipeline</span><strong>{{ money(forecast.pipeline_value) }}</strong></div>
+            </div>
+            <p class="section-note" style="margin-top:12px">{{ forecast.basis }}</p>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Revenue sources</h2></div>
+            {% if sources %}
+            <div class="breakdown">
+                {% for s in sources %}
+                <div class="breakdown-row"><span>{{ s.source|replace('_',' ')|title }} ({{ s.count }})</span><strong>{{ s.share }}%</strong></div>
+                <div class="meter"><span style="width: {{ s.share }}%"></span></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">No received revenue to break down yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="form-card clay-card">
+            <h2>Log revenue</h2>
+            <p>Record income the moment it lands.</p>
+            <form class="form-stack" action="/money" method="post">
+                <div class="field"><label for="r-source">Source</label><select id="r-source" name="source"><option value="sponsorship">Sponsorship</option><option value="affiliate">Affiliate</option><option value="digital_product">Digital product</option><option value="membership">Membership</option><option value="services">Services</option><option value="ads">Ads</option><option value="other">Other</option></select></div>
+                <div class="field"><label for="r-desc">Description</label><input id="r-desc" name="description" placeholder="e.g. Acme summer campaign"></div>
+                <div class="field"><label for="r-amount">Amount</label><input id="r-amount" name="amount" type="number" step="0.01" required></div>
+                <div class="grid-2">
+                    <div class="field"><label for="r-date">Date</label><input id="r-date" name="date" type="date"></div>
+                    <div class="field"><label for="r-due">Due date</label><input id="r-due" name="due_date" type="date"></div>
+                </div>
+                <div class="field"><label for="r-status">Status</label><select id="r-status" name="status"><option value="pending">Pending</option><option value="received">Received</option><option value="overdue">Overdue</option></select></div>
+                <label class="field" style="grid-template-columns:auto 1fr; align-items:center; gap:9px"><input type="checkbox" name="recurring" value="1" style="min-height:auto; width:auto"> <span class="section-note">This is recurring revenue</span></label>
+                <button class="btn" type="submit">Add revenue</button>
+            </form>
+        </section>
+    </aside>
+</div>
+{% endblock %}

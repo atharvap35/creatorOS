@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Library{% endblock %}
+{% block page_id %}library{% endblock %}
+{% block breadcrumb %}Library{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Your reusable assets</p><h1>Library</h1><p class="page-subtitle">Hooks, templates, briefs and brand notes you have already written — kept so you never rewrite them twice.</p></div>
+</header>
+
+<form class="toolbar" method="get" action="/library">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search your library…">
+    <select name="kind">
+        <option value="">All types</option>
+        {% for key, label in kinds.items() %}<option value="{{ key }}" {% if kind == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn small" type="submit">Filter</button>
+    {% if q or kind %}<a class="link" href="/library">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your assets</h2><span class="section-note">{{ assets|length }} item(s)</span></div>
+        {% if assets %}
+        <div class="list-stack">
+            {% for a in assets %}
+            <article class="list-card">
+                <span class="list-card-icon">{% if a.is_favorite %}★{% else %}▧{% endif %}</span>
+                <div class="list-card-content">
+                    <h3>{{ a.title }}</h3>
+                    {% if a.body %}<p class="pre">{{ a.body }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge">{{ kinds.get(a.kind, a.kind) }}</span>
+                        {% if a.tags %}<span class="section-note">{{ a.tags }}</span>{% endif %}
+                        {% if a.usage_count %}<span class="section-note">used {{ a.usage_count }}×</span>{% endif %}
+                    </div>
+                </div>
+                <form action="/library/{{ a.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">▧</div>
+            <strong>Your library is empty</strong>
+            <p>Anything you write twice belongs here: hooks that work, deal structures, briefs, your brand rules.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="stack">
+        <section class="form-card clay-card">
+            <h2>Add an asset</h2>
+            <p>Paste it once. Reuse it forever.</p>
+            <form class="form-stack" action="/library" method="post">
+                <div class="field"><label for="l-title">Title</label><input id="l-title" name="title" required placeholder="e.g. Hook: the honest reframe"></div>
+                <div class="field"><label for="l-kind">Type</label><select id="l-kind" name="kind">{% for key, label in kinds.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="l-body">Content</label><textarea id="l-body" name="body" rows="6"></textarea></div>
+                <div class="field"><label for="l-tags">Tags</label><input id="l-tags" name="tags" placeholder="hooks, sponsors"></div>
+                <button class="btn" type="submit">Save to library</button>
+            </form>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Starters</h2><span class="section-note">one click to save</span></div>
+            <div class="two-col-list">
+                {% for title, kind_name, body in starter %}
+                <div class="mini-row">
+                    <div><strong>{{ title }}</strong><small>{{ body }}</small></div>
+                    <form action="/library" method="post">
+                        <input type="hidden" name="title" value="{{ title }}">
+                        <input type="hidden" name="kind" value="{{ kind_name }}">
+                        <input type="hidden" name="body" value="{{ body }}">
+                        <button class="btn ghost small" type="submit">Save</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </aside>
+</div>
+{% endblock %}

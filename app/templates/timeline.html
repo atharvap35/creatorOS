@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import basis with context %}
+{% block title %}Timeline{% endblock %}
+{% block page_id %}timeline{% endblock %}
+{% block breadcrumb %}Timeline{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Your business, as it actually happened</p>
+        <h1>Timeline</h1>
+        <p class="page-subtitle">{{ event_count }} recorded event{{ '' if event_count == 1 else 's' }} in the last {{ days }} days. Every entry was written by the system when you changed something real.</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/timeline">All</a>
+        {% for k in kinds %}<a class="btn ghost small" href="/timeline?kind={{ k }}&days={{ days }}">{{ k }}</a>{% endfor %}
+    </div>
+</header>
+
+{% if grouped %}
+<div class="timeline">
+    {% for row in grouped %}
+    <section class="timeline-day">
+        <h2 class="timeline-date">{{ row.day.strftime('%A, %d %B %Y') }}</h2>
+        <ol class="timeline-events">
+            {% for e in row.events %}
+            <li class="timeline-event" data-kind="{{ e.kind }}">
+                <span class="timeline-dot" aria-hidden="true"></span>
+                <div class="timeline-body">
+                    <strong>{{ e.title }}</strong>
+                    {% if e.detail %}<p class="section-note">{{ e.detail }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge">{{ e.kind }}</span>
+                        <span class="section-note">{{ e.occurred_at.strftime('%H:%M') }}</span>
+                        {% if e.amount %}<span class="section-note">{{ active_currency() }} {{ e.amount|round(0)|int }}</span>{% endif %}
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+    {% endfor %}
+</div>
+{% else %}
+<section class="clay-card card-pad">
+    <div class="empty-state">
+        <div class="empty-icon">◷</div>
+        <strong>No history yet</strong>
+        <p>Events appear here as you convert an idea, publish content, move a deal stage, complete a deliverable, or record a payment. Nothing is written retroactively.</p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

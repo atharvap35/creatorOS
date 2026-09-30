@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button, basis with context %}
+{% block title %}Attention Center{% endblock %}
+{% block page_id %}attention{% endblock %}
+{% block breadcrumb %}Attention Center{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Everything that is slipping, waiting, or decaying</p>
+        <h1>Attention Center</h1>
+        <p class="page-subtitle">{{ summary.headline }}. {% if summary.money_at_risk %}{{ money(summary.money_at_risk|round(0)|int) }} is sitting in unpaid invoices.{% endif %}</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/attention">All</a>
+        {% for k in kinds %}<a class="btn ghost small" href="/attention?kind={{ k }}">{{ k }}</a>{% endfor %}
+    </div>
+</header>
+
+{% if items %}
+<div class="severity-legend">
+    {% for level, count in summary.counts.items() %}{% if count %}
+    <span class="severity-chip {{ level }}">{{ count }} {{ level }}</span>
+    {% endif %}{% endfor %}
+</div>
+
+<div class="attention-groups">
+    {% for level, rows in groups %}
+    <section class="clay-card card-pad attention-group" data-severity="{{ level }}">
+        <div class="section-head">
+            <h2>{{ level|capitalize }}</h2>
+            <span class="section-note">{{ rows|length }} item{{ '' if rows|length == 1 else 's' }}</span>
+        </div>
+        <div class="list-stack">
+            {% for item in rows %}
+            <article class="list-card attention-item" data-kind="{{ item.kind }}">
+                <div class="list-card-content">
+                    <h3>{{ item.title }}</h3>
+                    <p class="section-note">{{ item.detail }}</p>
+                    <div class="list-card-meta">
+                        <span class="badge {{ item.severity }}">{{ item.kind }}</span>
+                        {% if item.amount %}<span class="section-note">{{ money(item.amount|round(0)|int) }}</span>{% endif %}
+                        {% if item.age_days is not none %}<span class="section-note">{{ item.age_days }}d</span>{% endif %}
+                        {{ basis(item.basis) }}
+                    </div>
+                </div>
+                <div class="inline-action">
+                    {% if item.action and item.entity_id %}
+                        {{ action_button(item.action, item.action.replace('_', ' ')|title, item.entity_type, item.entity_id) }}
+                    {% endif %}
+                    {% if item.url %}<a class="btn ghost small" href="{{ item.url }}">Open</a>{% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</div>
+{% else %}
+<section class="clay-card card-pad">
+    <div class="empty-state">
+        <div class="empty-icon">✓</div>
+        <strong>Nothing needs attention</strong>
+        <p>No overdue payments, no stuck deliverables, no deadlines you have passed, and no goal falling behind. That is a real all-clear, not an empty dashboard.</p>
+        <div class="empty-actions">
+            <a class="btn ghost small" href="/content">Plan something new</a>
+            <a class="btn ghost small" href="/copilot">Ask the copilot</a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="clay-card card-pad">
+    <div class="section-head"><h2>This week's capacity</h2><span class="section-note">system-derived</span></div>
+    <p>{{ capacity.explanation }}</p>
+    <div class="progress"><span style="width: {{ [capacity.capacity_pct, 100]|min }}%"></span></div>
+    <p class="section-note">{{ capacity.planned_hours }}h planned of {{ capacity.available_hours }}h available across {{ capacity.working_days|length }} working day(s).</p>
+    {% if capacity.over_capacity %}
+    <div class="empty-actions">
+        <form action="/action/rebalance_week" method="post">
+            <input type="hidden" name="next" value="/attention">
+            <button class="btn small" type="submit">Rebalance week</button>
+        </form>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

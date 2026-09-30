@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f1ec">
+    <title>{% block title %}Creator OS{% endblock %} · Creator OS</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body data-page="{% block page_id %}page{% endblock %}">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <aside class="sidebar" id="sidebar">
+        <a class="brand" href="/today" aria-label="Creator OS today">
+            <span class="brand-mark">c</span>
+            <span class="brand-copy"><strong>creator<span>OS</span></strong><small>your business, in rhythm</small></span>
+        </a>
+
+        <nav class="primary-nav" aria-label="Main">
+            <span class="nav-label">Workspace</span>
+            <a class="nav-link{% if request.url.path == '/today' %} active{% endif %}" href="/today"><span class="nav-icon">◔</span><span>Today</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/content') %} active{% endif %}" href="/content"><span class="nav-icon">▤</span><span>Content</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/ideas') %} active{% endif %}" href="/ideas"><span class="nav-icon">✳</span><span>Ideas</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/workflow') %} active{% endif %}" href="/workflow"><span class="nav-icon">✓</span><span>Workflow</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/deals') %} active{% endif %}" href="/deals"><span class="nav-icon">◇</span><span>Deals</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/brands') or request.url.path.startswith('/series') or request.url.path.startswith('/offers') %} active{% endif %}" href="/brands"><span class="nav-icon">◈</span><span>Business</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/money') or request.url.path == '/rate-card' %} active{% endif %}" href="/money"><span class="nav-icon">$</span><span>Money</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/growth') %} active{% endif %}" href="/growth"><span class="nav-icon">↗</span><span>Growth</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/library') %} active{% endif %}" href="/library"><span class="nav-icon">▧</span><span>Library</span></a>
+        </nav>
+
+        <nav class="secondary-nav" aria-label="Secondary">
+            <a class="nav-link{% if request.url.path == '/attention' %} active{% endif %}" href="/attention"><span class="nav-icon">!</span><span>Attention</span></a>
+            <a class="nav-link{% if request.url.path == '/copilot' %} active{% endif %}" href="/copilot"><span class="nav-icon">c</span><span>Copilot</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/timeline') %} active{% endif %}" href="/timeline"><span class="nav-icon">◷</span><span>Timeline</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/goals') %} active{% endif %}" href="/goals"><span class="nav-icon">◎</span><span>Goals</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/reviews') %} active{% endif %}" href="/reviews/weekly"><span class="nav-icon">◷</span><span>Reviews</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/calendar') %} active{% endif %}" href="/calendar"><span class="nav-icon">▦</span><span>Calendar</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/rate-card') %} active{% endif %}" href="/rate-card"><span class="nav-icon">⌸</span><span>Rate card</span></a>
+            <a class="nav-link{% if request.url.path.startswith('/settings') %} active{% endif %}" href="/settings"><span class="nav-icon">⚙</span><span>Settings</span></a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="palette-trigger" type="button" data-open-palette>
+                <span>Search or jump to…</span><kbd>Ctrl K</kbd>
+            </button>
+            <div class="profile-card">
+                <div class="avatar">{{ (user.name or user.email)[0]|upper }}</div>
+                <div><strong>{{ user.name }}</strong><small>{{ active_currency() }} workspace</small></div>
+                <form action="/logout" method="post"><button class="link-button" type="submit">Sign out</button></form>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="main">
+        <header class="topbar">
+            <button class="icon-button mobile-only" type="button" data-toggle-sidebar aria-label="Toggle navigation">☰</button>
+            <div class="breadcrumb">
+                <span>Creator OS</span><span class="breadcrumb-divider">/</span><strong>{% block breadcrumb %}Today{% endblock %}</strong>
+            </div>
+            <div class="topbar-right">
+                {% block topbar_extra %}{% endblock %}
+                <button class="icon-button" type="button" data-open-palette aria-label="Open command palette">⌘</button>
+                <a class="topbar-avatar" href="/settings" title="Settings">{{ (user.name or user.email)[0]|upper }}</a>
+            </div>
+        </header>
+
+        <div class="page-content">
+            {% block content %}{% endblock %}
+            <footer class="page-footer">
+                <span>Built from your own data — no external platform tracking.</span>
+                <span>Creator OS <span class="footer-dot">·</span> <span id="current-year"></span></span>
+            </footer>
+        </div>
+    </main>
+
+    <a class="fab" href="/quick" aria-label="Quick capture">+</a>
+
+    <div class="palette-backdrop" data-palette hidden>
+        <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+            <input class="palette-input" type="search" placeholder="Search everything, or type a command…" data-palette-input autocomplete="off">
+            <div class="palette-results" data-palette-results>
+                <p class="palette-hint">Start typing to search content, ideas, tasks, deals, revenue and opportunities.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-region" data-toast-region aria-live="polite"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

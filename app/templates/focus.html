@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Focus mode · Creator OS</title>
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body style="display:block; background:radial-gradient(circle at 50% 0%, #efeafd 0%, var(--canvas) 55%)">
+    <main class="focus-stage">
+        <p class="eyebrow">Focus mode · one thing at a time</p>
+        {% if task %}
+        <h1 class="task-title">{{ task.title }}</h1>
+        {% if task.description %}<p class="page-subtitle" style="margin-bottom:16px">{{ task.description }}</p>{% endif %}
+
+        <div class="row-actions" style="justify-content:center; margin-bottom:22px">
+            <span class="badge">{{ task.estimated_minutes or 15 }} min</span>
+            <span class="badge {{ task.priority.value }}">{{ task.priority.value }}</span>
+            <span class="badge {{ task.status.value }}">{{ task.status.value }}</span>
+            {% if task.content_id %}<a class="link" href="/content/{{ task.content_id }}">Open linked content</a>{% endif %}
+            {% if task.deal_id %}<a class="link" href="/deals/{{ task.deal_id }}">Open linked deal</a>{% endif %}
+        </div>
+
+        <form class="row-actions" style="justify-content:center" action="/workflow/focus/{{ task.id }}" method="post">
+            <button class="btn" type="submit" name="action" value="complete">Mark complete</button>
+            <button class="btn ghost" type="submit" name="action" value="skip">Skip for now</button>
+        </form>
+        <p class="section-note" style="margin-top:18px">{{ workload.explanation }}</p>
+        {% else %}
+        <h1 class="task-title">Nothing to focus on</h1>
+        <p class="page-subtitle" style="margin-bottom:18px">You have no open task with a deadline. Add one, or enjoy the clear runway.</p>
+        <a class="btn" href="/workflow">Go to workflow</a>
+        {% endif %}
+        <p style="margin-top:26px"><a class="link" href="/today">← Back to Today</a></p>
+    </main>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

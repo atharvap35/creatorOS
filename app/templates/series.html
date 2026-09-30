@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button with context %}
+{% block title %}Series{% endblock %}
+{% block page_id %}series{% endblock %}
+{% block breadcrumb %}Series{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Commitments you made to yourself</p>
+        <h1>Series</h1>
+        <p class="page-subtitle">A series is a promise about future output. Progress is counted from episodes you have actually published.</p>
+    </div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your series</h2><span class="section-note">{{ series|length }} total</span></div>
+        {% if series %}
+        <div class="list-stack">
+            {% for row in series %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3><a href="/series/{{ row.series.id }}">{{ row.series.name }}</a></h3>
+                    <div class="list-card-meta">
+                        {% if row.series.platform %}<span class="badge">{{ row.series.platform }}</span>{% endif %}
+                        {% if row.at_target %}<span class="badge ok">target reached</span>{% endif %}
+                        {% if not row.series.is_active %}<span class="badge warn">paused</span>{% endif %}
+                    </div>
+                    <div class="progress"><span style="width: {{ (row.published_count / row.target * 100)|round(0)|int if row.target else 0 }}%"></span></div>
+                    <p class="section-note">
+                        {{ row.published_count }} published{% if row.target %} of {{ row.target }} episodes{% endif %}
+                        {% if row.planned_count %} · {{ row.planned_count }} planned{% endif %}
+                        {% if row.next_episode %} · next is episode {{ row.next_episode }}{% endif %}
+                    </p>
+                </div>
+                <div class="inline-action">
+                    {% if row.next_episode and not row.at_target %}
+                        {{ action_button('plan_next_episode', 'Plan next episode', 'series', row.series.id) }}
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">▤</div>
+            <strong>No series yet</strong>
+            <p>A series turns a one-off into a body of work, and makes “what should I post” answerable without guessing.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Start a series</h2>
+        <form class="form-stack" action="/series" method="post">
+            <div class="field"><label for="s-name">Series name</label><input id="s-name" name="name" required placeholder="e.g. Ship in public"></div>
+            <div class="field"><label for="s-desc">What is it about</label><textarea id="s-desc" name="description" rows="3"></textarea></div>
+            <div class="field"><label for="s-platform">Platform</label><input id="s-platform" name="platform" placeholder="optional"></div>
+            <div class="field"><label for="s-target">Target episodes</label><input id="s-target" name="target_episodes" type="number" min="1" placeholder="e.g. 12"></div>
+            <button class="btn" type="submit">Create series</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

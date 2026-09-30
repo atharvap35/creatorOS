@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block page_id %}search{% endblock %}
+{% block breadcrumb %}Search{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Everything you own</p><h1>Search</h1><p class="page-subtitle">One query across content, ideas, tasks, deals, revenue and opportunities.</p></div>
+</header>
+
+<form class="toolbar" method="get" action="/search">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search everything…" autofocus>
+    <button class="btn small" type="submit">Search</button>
+    {% if q %}<a class="link" href="/search">Clear</a>{% endif %}
+</form>
+
+{% if q|length < 2 %}
+<div class="empty-state">
+    <div class="empty-icon">⌕</div>
+    <strong>Type at least two characters</strong>
+    <p>Or press <kbd>Ctrl K</kbd> anywhere for the command palette.</p>
+</div>
+{% elif groups %}
+<div class="stack">
+    <p class="section-note">{{ total }} result(s) for “{{ q }}”</p>
+    {% for g in groups %}
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>{{ g.group }}</h2><span class="section-note">{{ g["items"]|length }}</span></div>
+        <div class="two-col-list">
+            {% for item in g["items"] %}
+            <div class="mini-row">
+                <div><strong>{{ item.title }}</strong><small>{{ item.subtitle }}</small></div>
+                <a class="btn ghost small" href="{{ item.url }}">Open</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">⌕</div>
+    <strong>Nothing found for “{{ q }}”</strong>
+    <p>Try a brand name, a topic, or part of a task title.</p>
+</div>
+{% endif %}
+{% endblock %}

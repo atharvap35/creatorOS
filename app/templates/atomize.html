@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import basis with context %}
+{% block title %}Atomize{% endblock %}
+{% block page_id %}atomize{% endblock %}
+{% block breadcrumb %}Repurpose{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">One piece, several uses</p>
+        <h1>Atomize “{{ item.title }}”</h1>
+        <p class="page-subtitle">Atoms are extracted from this item's own text. Select the ones worth making, and each becomes a real draft in your pipeline — nothing is published.</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/content/{{ item.id }}">Back to content</a>
+    </div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head">
+            <h2>Proposals</h2>
+            <span class="section-note">{{ total }} atom{{ '' if total == 1 else 's' }}</span>
+        </div>
+
+        {% if groups %}
+        <form action="/content/{{ item.id }}/atomize/create" method="post">
+            <div class="field inline-field">
+                <label for="due">Give new drafts a due date within</label>
+                <input id="due" name="due_within_days" type="number" min="1" max="90" value="7" style="max-width:90px">
+                <span>days</span>
+            </div>
+
+            {% for group in groups %}
+            <div class="atom-group">
+                <h3>{{ group.kind|replace('_', ' ')|title }}</h3>
+                {% for atom in group.atoms %}
+                <label class="atom-row" for="atom-{{ atom.id }}">
+                    <input id="atom-{{ atom.id }}" type="checkbox" name="atom_id" value="{{ atom.id }}" {% if atom.status == 'accepted' %}checked{% endif %}>
+                    <span class="atom-body">
+                        <strong>{{ atom.title }}</strong>
+                        {% if atom.body %}<span class="section-note">{{ atom.body }}</span>{% endif %}
+                        <span class="list-card-meta">
+                            <span class="badge">{{ atom.source or 'extracted' }}</span>
+                            {{ basis(atom.basis) }}
+                        </span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="empty-actions">
+                <button class="btn" type="submit">Create selected drafts</button>
+                <span class="section-note">Creates content records at the idea stage. Nothing is published.</span>
+            </div>
+        </form>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✳</div>
+            <strong>No atoms yet</strong>
+            <p>Generate a repurposing plan from this item's hook, script or caption. It works offline with no API key.</p>
+            <form action="/content/{{ item.id }}/atomize" method="post">
+                <button class="btn" type="submit" name="use_ai" value="on">Generate repurposing plan</button>
+            </form>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="clay-card card-pad">
+        <h2>How this works</h2>
+        <ul class="plain-list">
+            <li>Only text you wrote is used — hook, script, and caption.</li>
+            <li>Each atom is a candidate, not a commitment. You choose.</li>
+            <li>Selected atoms become drafts in your pipeline at the idea stage.</li>
+            <li>AI, when enabled, only rephrases your own material.</li>
+        </ul>
+        <form action="/content/{{ item.id }}/atomize" method="post" class="form-stack">
+            <button class="btn ghost small" type="submit" name="use_ai" value="on">Regenerate with AI</button>
+            <button class="btn ghost small" type="submit" name="use_ai" value="off">Regenerate offline</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

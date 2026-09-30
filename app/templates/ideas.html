@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Ideas{% endblock %}
+{% block page_id %}ideas{% endblock %}
+{% block breadcrumb %}Ideas{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Idea lab</p><h1>Ideas</h1><p class="page-subtitle">Every spark scored, explained, and one click away from becoming a real content plan.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/quick?type=idea">Quick capture</a></div>
+</header>
+
+<form class="toolbar" method="get" action="/ideas">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search ideas…">
+    <select name="status_filter">
+        <option value="">All stages</option>
+        <option value="backlog" {% if status_filter == 'backlog' %}selected{% endif %}>Backlog</option>
+        <option value="exploring" {% if status_filter == 'exploring' %}selected{% endif %}>Exploring</option>
+        <option value="validated" {% if status_filter == 'validated' %}selected{% endif %}>Validated</option>
+        <option value="converted" {% if status_filter == 'converted' %}selected{% endif %}>Converted</option>
+        <option value="archived" {% if status_filter == 'archived' %}selected{% endif %}>Archived</option>
+    </select>
+    <button class="btn small" type="submit">Filter</button>
+    {% if q or status_filter %}<a class="link" href="/ideas">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Idea bank</h2><span class="section-note">{{ ideas|length }} ideas</span></div>
+        {% if ideas %}
+        <div class="list-stack">
+            {% for i in ideas %}
+            <article class="list-card">
+                <div class="score-ring" title="Idea score {{ scores[i.id].score }} / 100">{{ scores[i.id].score }}</div>
+                <div class="list-card-content">
+                    <h3><a class="link" href="/ideas/{{ i.id }}">{{ i.title }}</a></h3>
+                    {% if i.description %}<p>{{ i.description }}</p>{% endif %}
+                    <div class="list-card-meta">
+                        <span class="badge {{ i.status.value }}">{{ i.status.value }}</span>
+                        <span class="badge">{{ i.type.value }}</span>
+                        <span class="section-note">potential {{ i.potential.value }} · effort {{ i.effort.value }} · confidence {{ i.confidence or 'medium' }}</span>
+                        {% if i.converted_content_id %}<span class="badge ready">converted</span>{% endif %}
+                    </div>
+                </div>
+                <div class="row-actions">
+                    {% if not i.converted_content_id %}
+                    <form action="/ideas/{{ i.id }}/turn-into-content" method="post"><button class="btn small" type="submit">Turn into content</button></form>
+                    {% else %}
+                    <a class="btn ghost small" href="/content/{{ i.converted_content_id }}">Open content</a>
+                    {% endif %}
+                    <form action="/ideas/{{ i.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">✳</div>
+            <strong>Your idea bank is empty</strong>
+            <p>Ideas are the cheapest input you have. Capture sparks here, then turn the good ones into content with one click.</p>
+            <a class="btn small" href="/quick?type=idea">Capture your first idea</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Capture an idea</h2>
+        <p>Problem, audience and score — not just a title.</p>
+        <form class="form-stack" action="/ideas" method="post">
+            <div class="field"><label for="i-title">Idea</label><input id="i-title" name="title" required placeholder="e.g. A creator tool roundup"></div>
+            <div class="field"><label for="i-problem">Problem it solves</label><input id="i-problem" name="problem" placeholder="Who has this problem?"></div>
+            <div class="field"><label for="i-aud">Audience</label><input id="i-aud" name="audience" placeholder="e.g. New creators"></div>
+            <div class="field"><label for="i-desc">Notes</label><input id="i-desc" name="description" placeholder="Why might this work?"></div>
+            <div class="field"><label for="i-type">Type</label><select id="i-type" name="type"><option value="content">Content</option><option value="product">Product</option><option value="affiliate">Affiliate</option><option value="sponsorship">Sponsorship</option><option value="service">Service</option><option value="membership">Membership</option><option value="other">Other</option></select></div>
+            <div class="grid-2">
+                <div class="field"><label for="i-pot">Potential</label><select id="i-pot" name="potential"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                <div class="field"><label for="i-eff">Effort</label><select id="i-eff" name="effort"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label for="i-conf">Confidence</label><select id="i-conf" name="confidence"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                <div class="field"><label for="i-money">Monetization</label><select id="i-money" name="monetization_potential"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+            </div>
+            <button class="btn" type="submit">Save idea</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

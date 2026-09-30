@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button, basis %}
+{% block title %}Business review{% endblock %}
+{% block page_id %}business-review{% endblock %}
+{% block breadcrumb %}CEO review{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ review.period_start.strftime('%b %Y') }} – {{ review.period_end.strftime('%b %Y') }}</p>
+        <h1>Business review</h1>
+        <p class="page-subtitle">The whole business at once: revenue, the content engine, who you work with, and what could go wrong. Every figure is computed from your own records.</p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/reviews/weekly">Weekly</a>
+        <a class="btn ghost small" href="/reviews/monthly">Monthly</a>
+    </div>
+</header>
+
+{# ------------------------------------------------------------------------ #}
+<section class="clay-card card-pad">
+    <div class="section-head"><h2>Revenue</h2>{{ basis(review.basis) }}</div>
+    <div class="stat-row">
+        <div class="stat">
+            <span class="stat-label">This month</span>
+            <span class="stat-value">{{ money(review.revenue.this_month|round(0)|int) }}</span>
+            {% if review.revenue.month_over_month is not none %}
+            <span class="section-note {{ 'good' if review.revenue.month_over_month >= 0 else 'bad' }}">{{ review.revenue.month_over_month }}% vs last month</span>
+            {% endif %}
+        </div>
+        <div class="stat">
+            <span class="stat-label">Year to date</span>
+            <span class="stat-value">{{ money(review.revenue.ytd|round(0)|int) }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Outstanding</span>
+            <span class="stat-value {{ 'warn' if review.revenue.overdue }}">{{ money(review.revenue.outstanding|round(0)|int) }}</span>
+            {% if review.revenue.overdue %}<span class="section-note bad">{{ money(review.revenue.overdue|round(0)|int) }} overdue</span>{% endif %}
+        </div>
+    </div>
+
+    {% if review.revenue.by_month %}
+    <h3 class="subsection">By month</h3>
+    <ul class="plain-list">
+        {% for m in review.revenue.by_month %}
+        <li><span class="stat-value small">{{ money(m.total|round(0)|int) }}</span> <span class="section-note">{{ m.month }}</span></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if review.revenue.by_source %}
+    <h3 class="subsection">By source</h3>
+    <ul class="plain-list">
+        {% for s in review.revenue.by_source %}
+        <li><span class="stat-value small">{{ money(s.total|round(0)|int) }}</span> <span class="section-note">{{ s.source }}</span></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</section>
+
+<div class="today-grid">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Content engine</h2><span class="section-note">system-derived</span></div>
+        <div class="stat-row">
+            <div class="stat"><span class="stat-label">Published</span><span class="stat-value">{{ review.content_engine.published }}</span></div>
+            <div class="stat"><span class="stat-label">In flight</span><span class="stat-value">{{ review.content_engine.in_flight }}</span></div>
+            <div class="stat"><span class="stat-label">Stuck</span><span class="stat-value {{ 'warn' if review.content_engine.stuck }}">{{ review.content_engine.stuck }}</span></div>
+        </div>
+        <p class="section-note">Consistency: {{ review.content_engine.consistency }}. {{ review.content_engine.atomizable }} published piece(s) could still be repurposed.</p>
+
+        {% if review.content_engine.series %}
+        <h3 class="subsection">Series</h3>
+        <ul class="plain-list">
+            {% for row in review.content_engine.series %}
+            <li>
+                <a href="/series/{{ row.series.id }}">{{ row.series.name }}</a>
+                <span class="section-note">{{ row.published_count }} published{% if row.target %} of {{ row.target }}{% endif %}{% if row.at_target %} · target reached{% endif %}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Brand portfolio</h2><span class="section-note">{{ review.brand_portfolio.open_deals }} open deal(s)</span></div>
+        {% if review.brand_portfolio.brands %}
+        <ul class="plain-list">
+            {% for p in review.brand_portfolio.brands %}
+            <li>
+                <a href="/brands/{{ p.brand.id }}">{{ p.brand.name }}</a>
+                <span class="section-note">{{ money(p.revenue_total|round(0)|int) }} received · {{ p.deal_count }} deal(s)</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if review.brand_portfolio.concentration %}
+        <h3 class="subsection">Concentration</h3>
+        <ul class="plain-list">
+            {% for c in review.brand_portfolio.concentration %}
+            <li><span class="stat-value small">{{ c.share }}%</span> <span class="section-note">{{ c.name }}</span></li>
+            {% endfor %}
+        </ul>
+        <p class="section-note">Share of your recorded year-to-date revenue. No market benchmark is applied.</p>
+        {% endif %}
+        {% else %}
+        <div class="empty-inline">No brands recorded yet. <a href="/brands">Add one</a> to see portfolio concentration.</div>
+        {% endif %}
+    </section>
+</div>
+
+<section class="clay-card card-pad">
+    <div class="section-head"><h2>Business risks</h2><span class="section-note">{{ review.risks|length }} identified</span></div>
+    {% if review.risks %}
+    <div class="list-stack">
+        {% for risk in review.risks %}
+        <article class="attention-row" data-severity="{{ risk.severity }}">
+            <div>
+                <strong>{{ risk.title }}</strong>
+                <p class="section-note">{{ risk.detail }}</p>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">✓</div>
+        <strong>No risks in your own records</strong>
+        <p>Nothing overdue, no goal behind, and no overcommitment. This is a real all-clear.</p>
+    </div>
+    {% endif %}
+</section>
+
+<div class="today-grid">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Decisions you made</h2><span class="section-note">only recorded changes</span></div>
+        {% if review.decisions %}
+        <ul class="plain-list event-list">
+            {% for d in review.decisions %}
+            <li>
+                <span class="badge">{{ d.kind }}</span> {{ d.title }}
+                <span class="section-note">{{ d.when.strftime('%b %d') if d.when else '' }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-inline">No payments received or deal stage changes recorded this quarter. <a href="/timeline">Timeline</a></div>
+        {% endif %}
+    </section>
+
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Priorities</h2><a class="section-note link" href="/money">Money</a></div>
+        {% if review.priorities %}
+        <ul class="plain-list money-list">
+            {% for p in review.priorities %}
+            <li>
+                <div>
+                    <strong>{{ p.title }}</strong>
+                    <span class="section-note">{{ p.why }} · ~{{ p.effort_minutes }} min</span>
+                </div>
+                <div class="money-list-side">
+                    {% if p.value %}<span class="stat-value small">{{ money(p.value|round(0)|int) }}</span>{% endif %}
+                    {% if p.action and p.entity_id %}
+                        {{ action_button(p.action, p.action.replace('_', ' ')|title, p.entity_type, p.entity_id, next_url='/reviews/business') }}
+                    {% else %}
+                        <a class="btn ghost small" href="{{ p.url }}">Open</a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty-inline">Nothing outstanding, uninvoiced, or open to prioritise.</div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+{% block page_id %}onboarding{% endblock %}
+{% block breadcrumb %}Setup · {{ current.title }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Step {{ index + 1 }} of {{ total }}</p>
+        <h1>{{ current.title }}</h1>
+        <p class="page-subtitle">{{ current.subtitle }}</p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/today">Skip for now</a></div>
+</header>
+
+<div class="stepper">
+    {% for s in steps %}
+    <div class="step{% if loop.index0 == index %} current{% elif loop.index0 < index %} done{% endif %}"><span>{{ loop.index }}</span><small>{{ s.title }}</small></div>
+    {% endfor %}
+</div>
+
+<section class="clay-card card-pad">
+    <form class="form-stack" action="/onboarding" method="post">
+        <input type="hidden" name="step" value="{{ index }}">
+        <input type="hidden" name="name" value="{{ user.name or '' }}">
+        <input type="hidden" name="niche" value="{{ pref.niche or '' }}">
+        <input type="hidden" name="audience" value="{{ pref.audience or '' }}">
+        <input type="hidden" name="tone" value="{{ pref.tone or '' }}">
+        <input type="hidden" name="platforms" value="{{ pref.platforms or '' }}">
+        <input type="hidden" name="primary_goal" value="{{ pref.primary_goal or '' }}">
+        <input type="hidden" name="pillars" value="">
+        <input type="hidden" name="working_days" value="{{ pref.working_days or '0,1,2,3,4' }}">
+        <input type="hidden" name="hours_per_day" value="{{ pref.hours_per_day or 4 }}">
+        <input type="hidden" name="monetization_methods" value="{{ pref.monetization_methods or '' }}">
+
+        {% if current.key == 'identity' %}
+        <div class="grid-2">
+            <div class="field"><label for="s-name">Your name</label><input id="s-name" name="name" value="{{ user.name or '' }}" placeholder="How should we greet you?"></div>
+            <div class="field"><label for="s-tone">Tone</label><input id="s-tone" name="tone" value="{{ pref.tone or '' }}" placeholder="e.g. direct, practical"></div>
+        </div>
+        <div class="field"><label for="s-aud">Who is your audience?</label><input id="s-aud" name="audience" value="{{ pref.audience or '' }}" placeholder="e.g. Freelancers building a first audience"></div>
+
+        {% elif current.key == 'niche' %}
+        <div class="field"><label for="s-niche">Your niche</label><input id="s-niche" name="niche" value="{{ pref.niche or '' }}" placeholder="e.g. AI workflows for busy professionals"></div>
+        <div class="field"><label for="s-aud2">Audience, in one line</label><input id="s-aud2" name="audience" value="{{ pref.audience or '' }}"></div>
+
+        {% elif current.key == 'platforms' %}
+        <div class="field"><label for="s-plat">Platforms (comma separated)</label><input id="s-plat" name="platforms" value="{{ pref.platforms or 'instagram,youtube' }}" placeholder="instagram,youtube"></div>
+        <p class="section-note">New content defaults to your first platform.</p>
+
+        {% elif current.key == 'goal' %}
+        <div class="field"><label for="s-goal">Primary goal right now</label>
+            <select id="s-goal" name="primary_goal">{% for key, label in goals.items() %}<option value="{{ key }}" {% if pref.primary_goal == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+        </div>
+
+        {% elif current.key == 'pillars' %}
+        <div class="field"><label for="s-pillar">Pillars (comma separated)</label><input id="s-pillar" name="pillars" placeholder="{{ pillar_suggestions[:4]|join(', ') }}"></div>
+        <div class="chip-row">
+            {% for p in pillar_suggestions %}
+            <form action="/onboarding" method="post">
+                <input type="hidden" name="step" value="{{ index }}">
+                <input type="hidden" name="pillars" value="{{ p }}">
+                <input type="hidden" name="name" value="{{ user.name or '' }}">
+                <input type="hidden" name="niche" value="{{ pref.niche or '' }}">
+                <input type="hidden" name="audience" value="{{ pref.audience or '' }}">
+                <input type="hidden" name="hours_per_day" value="{{ pref.hours_per_day or 4 }}">
+                <button class="chip" type="submit">+ {{ p }}</button>
+            </form>
+            {% endfor %}
+        </div>
+        {% if existing_pillars %}
+        <p class="section-note">Already saved: {% for p in existing_pillars %}{{ p.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+        {% else %}
+        <p class="section-note">Nothing saved yet. Type a few themes you keep returning to.</p>
+        {% endif %}
+
+        {% elif current.key == 'capacity' %}
+        <div class="grid-2">
+            <div class="field"><label for="s-hours">Hours per day</label><input id="s-hours" name="hours_per_day" type="number" min="1" max="16" value="{{ pref.hours_per_day or 4 }}"></div>
+            <div class="field"><label for="s-days">Working days</label><input id="s-days" name="working_days" value="{{ pref.working_days or '0,1,2,3,4' }}" placeholder="0,1,2,3,4"></div>
+        </div>
+        <p class="section-note">0 = Monday. This is what the capacity warnings compare your plan against.</p>
+
+        {% else %}
+        <div class="field"><label for="s-mon">How you make money (comma separated)</label><input id="s-mon" name="monetization_methods" value="{{ pref.monetization_methods or '' }}" placeholder="{{ monetization[:3]|join(', ') }}"></div>
+        <div class="chip-row">
+            {% for m in monetization %}
+            <form action="/onboarding" method="post">
+                <input type="hidden" name="step" value="{{ index }}">
+                <input type="hidden" name="monetization_methods" value="{{ m }}">
+                <button class="chip" type="submit">+ {{ m }}</button>
+            </form>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="row-actions">
+            {% if index > 0 %}
+            <a class="btn ghost" href="/onboarding?step={{ index - 1 }}">Back</a>
+            {% endif %}
+            <button class="btn" type="submit" name="finish" value="{{ '1' if index == total - 1 else '' }}">{{ "Finish setup" if index == total - 1 else "Save and continue" }}</button>
+        </div>
+    </form>
+</section>
+
+<p class="section-note" style="margin-top:16px">AI writer: {{ ai.provider }} — {{ ai.hint }}</p>
+{% endblock %}

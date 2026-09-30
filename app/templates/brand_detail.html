@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "components/actions.html" import action_button with context %}
+{% block title %}{{ brand.name }}{% endblock %}
+{% block page_id %}brand-detail{% endblock %}
+{% block breadcrumb %}Brands / {{ brand.name }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Brand relationship</p>
+        <h1>{{ brand.name }}</h1>
+        <p class="page-subtitle">
+            {{ brand.relationship_status or 'prospect' }}
+            {% if profile %} · {{ profile.deal_count }} deal{{ '' if profile.deal_count == 1 else 's' }} ·
+            {{ money(profile.revenue_total|round(0)|int) }} received{% endif %}
+        </p>
+    </div>
+    <div class="heading-actions"><a class="btn ghost small" href="/brands">All brands</a></div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Deals with this brand</h2><span class="section-note">{{ deals|length }} total</span></div>
+        {% if deals %}
+        <div class="list-stack">
+            {% for d in deals %}
+            <article class="list-card">
+                <div class="list-card-content">
+                    <h3><a href="/deals/{{ d.id }}">{{ d.campaign_name or d.brand_name }}</a></h3>
+                    <div class="list-card-meta">
+                        <span class="badge">{{ d.stage or d.status.value }}</span>
+                        <span class="badge {{ d.payment_status.value }}">{{ d.payment_status.value|replace('_', ' ') }}</span>
+                    </div>
+                    <p class="section-note">{{ d.currency }} {{ (d.deal_value or 0)|round(0)|int }}{% if d.deadline %} · due {{ d.deadline.strftime('%b %d, %Y') }}{% endif %}</p>
+                </div>
+                <div class="inline-action">
+                    {{ action_button('draft_follow_up', 'Draft follow-up', 'deal', d.id) }}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◇</div>
+            <strong>No deals recorded</strong>
+            <p>Link a deal to this brand from the deal page, and it will show here with its payment history.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="clay-card card-pad form-stack">
+        <h2>Details</h2>
+        <form class="form-stack" action="/brands/{{ brand.id }}/update" method="post">
+            <div class="field"><label for="e-name">Brand name</label><input id="e-name" name="name" required value="{{ brand.name }}"></div>
+            <div class="field"><label for="e-site">Website</label><input id="e-site" name="website" value="{{ brand.website or '' }}"></div>
+            <div class="field"><label for="e-contact">Contact name</label><input id="e-contact" name="contact_name" value="{{ brand.contact_name or '' }}"></div>
+            <div class="field"><label for="e-email">Contact email</label><input id="e-email" name="contact_email" type="email" value="{{ brand.contact_email or '' }}"></div>
+            <div class="field"><label for="e-status">Relationship</label>
+                <select id="e-status" name="relationship_status">{% for s in states %}<option value="{{ s }}" {% if brand.relationship_status == s %}selected{% endif %}>{{ s|capitalize }}</option>{% endfor %}</select>
+            </div>
+            <div class="field"><label for="e-notes">Notes</label><textarea id="e-notes" name="notes" rows="4">{{ brand.notes or '' }}</textarea></div>
+            <button class="btn" type="submit">Save</button>
+        </form>
+
+        {% if events %}
+        <h3>History</h3>
+        <ul class="plain-list">
+            {% for e in events %}<li>{{ e.occurred_at.strftime('%b %d') }} — {{ e.title }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

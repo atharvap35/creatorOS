@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Deals{% endblock %}
+{% block page_id %}deals{% endblock %}
+{% block breadcrumb %}Deals{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Partnerships, end to end</p><h1>Deal pipeline</h1><p class="page-subtitle">From first contact to paid — with deliverables and follow-ups attached to each deal.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/rate-card">Rate card</a></div>
+</header>
+
+<div class="stat-grid">
+    <div class="stat-tile"><span class="eyebrow">Open pipeline</span><div class="stat-value">{{ money(pipeline_value) }}</div><p class="stat-sub">{{ items|length }} deals in the list</p></div>
+    <div class="stat-tile"><span class="eyebrow">Deliverables</span><div class="stat-value">{{ deliverable_counts.values()|sum }}</div><p class="stat-sub">across all tracked deals</p></div>
+</div>
+
+<form class="toolbar" method="get" action="/deals">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search brands…">
+    <select name="status_filter">
+        <option value="">All stages</option>
+        {% for key, label in stages %}<option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <button class="btn small" type="submit">Filter</button>
+    {% if q or status_filter %}<a class="link" href="/deals">Clear</a>{% endif %}
+</form>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Deals</h2><span class="section-note">{{ items|length }} partnerships</span></div>
+        {% if items %}
+        <div class="list-stack">
+            {% for item in items %}
+            <article class="list-card">
+                <span class="list-card-icon">◇</span>
+                <div class="list-card-content">
+                    <h3><a class="link" href="/deals/{{ item.id }}">{{ item.brand_name }}</a> — {{ item.campaign_name }}</h3>
+                    <div class="list-card-meta">
+                        <span class="badge {{ item.stage }}">{{ (item.stage or 'lead')|replace('_', ' ') }}</span>
+                        <span class="badge {{ item.payment_status.value }}">{{ item.payment_status.value }}</span>
+                        {% if deliverable_counts[item.id] %}<span class="section-note">{{ deliverable_counts[item.id] }} deliverable(s)</span>{% endif %}
+                        {% if item.deadline %}<span class="section-note">Deadline {{ item.deadline.strftime("%b %d") }}</span>{% endif %}
+                        {% if item.follow_up_date %}<span class="section-note">Follow up {{ item.follow_up_date.strftime("%b %d") }}</span>{% endif %}
+                    </div>
+                    {% if item.next_action %}<p class="next-action"><strong>Next:</strong> {{ item.next_action }}</p>{% endif %}
+                </div>
+                <div class="inline-action">
+                    <div class="metric">{{ money(item.deal_value) }}</div>
+                    <div class="row-actions">
+                        <a class="btn ghost small" href="/deals/{{ item.id }}">Open</a>
+                        <form action="/deals/{{ item.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">Delete</button></form>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">◇</div>
+            <strong>No deals yet</strong>
+            <p>A deal tracks one brand from first contact to payment, including deliverables. Start with the brand you are already talking to.</p>
+            <a class="btn small" href="/quick?type=deal">Add your first deal</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add a deal</h2>
+        <p>Deal health is calculated from your dates and deliverables — nothing hidden.</p>
+        <form class="form-stack" action="/deals" method="post">
+            <div class="field"><label for="b-name">Brand</label><input id="b-name" name="brand_name" required placeholder="e.g. Acme"></div>
+            <div class="field"><label for="b-camp">Campaign</label><input id="b-camp" name="campaign_name" required placeholder="e.g. Summer launch"></div>
+            <div class="field"><label for="b-value">Value</label><input id="b-value" name="deal_value" type="number" step="0.01" value="0"></div>
+            <div class="field"><label for="b-stage">Stage</label><select id="b-stage" name="stage">{% for key, label in stages %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+            <div class="field"><label for="b-pay">Payment status</label><select id="b-pay" name="payment_status"><option value="not_invoiced">Not invoiced</option><option value="invoiced">Invoiced</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="overdue">Overdue</option></select></div>
+            <div class="field"><label for="b-deadline">Campaign deadline</label><input id="b-deadline" name="deadline" type="date"></div>
+            <div class="field"><label for="b-due">Payment due date</label><input id="b-due" name="payment_due_date" type="date"></div>
+            <div class="field"><label for="b-next">Next action</label><input id="b-next" name="next_action" placeholder="Send the rate card"></div>
+            <div class="field"><label for="b-follow">Follow-up date</label><input id="b-follow" name="follow_up_date" type="date"></div>
+            <button class="btn" type="submit">Save deal</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

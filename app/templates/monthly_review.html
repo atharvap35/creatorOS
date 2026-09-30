@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Monthly review{% endblock %}
+{% block page_id %}monthly-review{% endblock %}
+{% block breadcrumb %}Reviews / Monthly{% endblock %}
+{% block topbar_extra %}<a class="btn ghost small" href="/reviews/weekly">Weekly</a>{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ review.period_start.strftime("%B %Y") }}</p>
+        <h1>Monthly review</h1>
+        <p class="page-subtitle">Month against month, with every change computed from your own records.</p>
+    </div>
+</header>
+
+<div class="stat-grid">
+    <div class="stat-tile">
+        <span class="eyebrow">Revenue</span>
+        <div class="stat-value">{{ money(review.summary.revenue) }}</div>
+        <p class="stat-sub">{% if review.summary.revenue_change is none %}no prior month{% elif review.summary.revenue_change > 0 %}+{{ review.summary.revenue_change }}% vs last month{% elif review.summary.revenue_change < 0 %}{{ review.summary.revenue_change }}% vs last month{% else %}flat vs last month{% endif %}</p>
+    </div>
+    <div class="stat-tile">
+        <span class="eyebrow">Published</span>
+        <div class="stat-value">{{ review.summary.published }}</div>
+        <p class="stat-sub">{% if review.summary.published_change is none %}no prior month{% else %}{{ review.summary.published_change }}% vs last month{% endif %}</p>
+    </div>
+    <div class="stat-tile">
+        <span class="eyebrow">Outstanding</span>
+        <div class="stat-value">{{ money(review.summary.outstanding) }}</div>
+        <p class="stat-sub">{{ review.summary.outstanding_count }} unpaid</p>
+    </div>
+    <div class="stat-tile">
+        <span class="eyebrow">Deals</span>
+        <div class="stat-value">{{ review.summary.deals_completed }}</div>
+        <p class="stat-sub">{{ review.summary.new_deals }} new · {{ review.summary.deals_paid }} paid</p>
+    </div>
+</div>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Revenue by source</h2></div>
+            {% if review.sources %}
+            <div class="breakdown">
+                {% for s in review.sources %}
+                <div class="breakdown-row"><span>{{ s.source|replace('_',' ')|title }} ({{ s.count }})</span><strong>{{ money(s.total) }} · {{ s.share }}%</strong></div>
+                <div class="meter"><span style="width: {{ s.share }}%"></span></div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">No received revenue recorded this month.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Coming next</h2><span class="section-note">scheduled content</span></div>
+            {% if review.upcoming %}
+            <div class="two-col-list">
+                {% for c in review.upcoming %}
+                <div class="mini-row">
+                    <div><strong>{{ c.title }}</strong><small>{{ c.platform.value }} · due {{ c.due_date.strftime("%b %d") if c.due_date else "unscheduled" }}</small></div>
+                    <a class="btn ghost small" href="/content/{{ c.id }}">Open</a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">Nothing scheduled past this month. The pipeline needs feeding.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Next actions</h2><span class="section-note">from the same engine as Today</span></div>
+            <div class="two-col-list">
+                {% for a in review.next_actions %}
+                <div class="mini-row"><div><strong>{{ a.title }}</strong><small>{{ a.reason }}</small></div><a class="link" href="{{ a.url }}">{{ a.cta }}</a></div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <aside class="form-card clay-card">
+        <h2>Plan next month</h2>
+        <p>Turn the strongest next action into a real task with a deadline.</p>
+        <form class="form-stack" action="/reviews/start-week" method="post">
+            <div class="field"><label for="m-title">Task</label><input id="m-title" name="title" placeholder="e.g. Re-send proposal to Acme"></div>
+            <div class="field"><label for="m-reason">Why</label><input id="m-reason" name="reason" placeholder="Optional"></div>
+            <div class="field"><label for="m-min">Estimated minutes</label><input id="m-min" name="minutes" type="number" value="30" min="0"></div>
+            <button class="btn" type="submit">Create task</button>
+        </form>
+        <a class="btn ghost small" style="margin-top:14px" href="/workflow?created=1">Open workflow</a>
+    </aside>
+</div>
+{% endblock %}

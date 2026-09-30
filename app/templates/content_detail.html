@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }}{% endblock %}
+{% block page_id %}content-detail{% endblock %}
+{% block breadcrumb %}Content / {{ item.title }}{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">{{ item.platform.value }} · {{ item.content_type.value }}</p>
+        <h1>{{ item.title }}</h1>
+        <p class="page-subtitle">
+            <span class="badge {{ item.status.value }}">{{ item.status.value }}</span>
+            {% if item.due_date %} <span class="section-note">Due {{ item.due_date.strftime("%b %d, %Y") }}</span>{% endif %}
+            {% if item.repurposed_from_id %} <span class="section-note">Repurposed from another piece</span>{% endif %}
+        </p>
+    </div>
+    <div class="heading-actions">
+        <a class="btn ghost small" href="/content">Back to content</a>
+        <a class="btn small" href="/content/{{ item.id }}/repurpose">Repurpose</a>
+    </div>
+</header>
+
+<div class="page-layout">
+    <div class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Content brief</h2><span class="section-note">What this piece must achieve</span></div>
+            <form class="form-stack" action="/content/{{ item.id }}" method="post">
+                <div class="field"><label for="c-title">Title</label><input id="c-title" name="title" value="{{ item.title }}" required></div>
+                <div class="grid-2">
+                    <div class="field"><label for="c-status">Stage</label><select id="c-status" name="status">{% for s in ['idea','scripting','filming','editing','ready','published','archived'] %}<option value="{{ s }}" {% if item.status.value == s %}selected{% endif %}>{{ s|title }}</option>{% endfor %}</select></div>
+                    <div class="field"><label for="c-platform">Platform</label><select id="c-platform" name="platform">{% for p in ['instagram','youtube','tiktok','linkedin','x','newsletter','other'] %}<option value="{{ p }}" {% if item.platform.value|lower == p %}selected{% endif %}>{{ p|title }}</option>{% endfor %}</select></div>
+                </div>
+                <div class="field"><label for="c-goal">Goal — what should this achieve?</label>
+                    <select id="c-goal" name="brief_goal">{% for g in ['reach','engagement','authority','leads','sales','community','partnership'] %}<option value="{{ g }}" {% if brief and brief.goal == g %}selected{% endif %}>{{ g|title }}</option>{% endfor %}</select>
+                </div>
+                <div class="field"><label for="b-audience">Audience — who is this for?</label><input id="b-audience" name="brief_audience" value="{{ brief.audience if brief else '' }}" placeholder="e.g. Freelancers trying to build systems"></div>
+                <div class="field"><label for="b-hook">Hook — what earns attention?</label><input id="b-hook" name="hook" value="{{ item.hook or '' }}" placeholder="e.g. I deleted 12 apps. This stayed."></div>
+                <div class="field"><label for="b-core">Core idea — the actual message</label><textarea id="b-core" name="brief_core_idea">{{ brief.core_idea if brief and brief.core_idea else item.description or '' }}</textarea></div>
+                <div class="field"><label for="b-proof">Proof — why believe it?</label><input id="b-proof" name="brief_proof" value="{{ brief.proof if brief else '' }}" placeholder="Result, number, or personal example"></div>
+                <div class="field"><label for="b-cta">CTA — what should the viewer do?</label><input id="b-cta" name="brief_cta" value="{{ brief.cta if brief else '' }}" placeholder="e.g. Save this for your next launch"></div>
+                <div class="field"><label for="b-dist">Distribution — where does it appear?</label><input id="b-dist" name="brief_distribution" value="{{ brief.distribution if brief else '' }}" placeholder="Reel + story + newsletter teaser"></div>
+                <div class="field"><label for="b-rep">Repurposing — what can this become?</label><textarea id="b-rep" name="brief_repurposing">{{ brief.repurposing_plan if brief and brief.repurposing_plan else '' }}</textarea></div>
+                <div class="field"><label for="c-caption">Caption</label><textarea id="c-caption" name="caption">{{ item.caption or '' }}</textarea></div>
+                <div class="field"><label for="c-script">Script / outline</label><textarea id="c-script" name="script">{{ item.script or '' }}</textarea></div>
+                <div class="field"><label for="c-notes">Notes</label><input id="c-notes" name="notes" value="{{ item.notes or '' }}"></div>
+                <div class="field"><label for="c-pillar">Pillar</label><select id="c-pillar" name="pillar_id"><option value="">No pillar</option>{% for p in pillars %}<option value="{{ p.id }}" {% if item.pillar_id == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="c-due">Due date</label><input id="c-due" name="due_date" type="date" value="{{ item.due_date.strftime('%Y-%m-%d') if item.due_date else '' }}"></div>
+                <div class="grid-2">
+                    <div class="field"><label for="c-perf">Performance (1–5)</label><input id="c-perf" name="performance_rating" type="number" min="0" max="5" value="{{ item.performance_rating or 0 }}"></div>
+                    <div class="field"><label for="c-perfnote">What worked?</label><input id="c-perfnote" name="performance_note" value="{{ item.performance_note or '' }}" placeholder="Your own observation"></div>
+                </div>
+                <button class="btn" type="submit">Save content</button>
+            </form>
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Production tasks</h2><span class="section-note">{{ tasks|length }} linked</span></div>
+            {% if tasks %}
+            <div class="two-col-list">
+                {% for t in tasks %}
+                <div class="mini-row">
+                    <div><strong>{{ t.title }}</strong><small>{{ t.status.value }}{% if t.estimated_minutes %} · {{ t.estimated_minutes }} min{% endif %}</small></div>
+                    <form action="/workflow/{{ t.id }}/complete" method="post"><button class="btn ghost small" type="submit">{% if t.status.value == 'completed' %}Reopen{% else %}Mark done{% endif %}</button></form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><div class="empty-icon">✓</div><strong>No production tasks yet</strong><p>Break this piece into steps so it actually gets finished.</p></div>
+            {% endif %}
+            <form class="toolbar" action="/content/{{ item.id }}/tasks" method="post" style="margin-top:14px">
+                <input name="title" placeholder="Add a production step…" required>
+                <input name="estimated_minutes" type="number" value="30" min="0" style="max-width:110px">
+                <input name="due_date" type="date" style="max-width:170px">
+                <button class="btn small" type="submit">Add</button>
+            </form>
+        </section>
+    </div>
+
+    <aside class="stack">
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Repurposing</h2><a class="link" href="/content/{{ item.id }}/repurpose">Open workspace</a></div>
+            {% if derivatives %}
+            <div class="two-col-list">
+                {% for d in derivatives %}
+                <div class="mini-row">
+                    <div><strong>{{ d.title }}</strong><small>{{ d.kind }} · {{ d.status.replace('_', ' ') }}</small></div>
+                    {% if d.status == 'planned' %}
+                    <form action="/content/{{ item.id }}/derivatives/{{ d.id }}/convert" method="post"><button class="btn ghost small" type="submit">Make content</button></form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="section-note">No derivatives planned. One published piece can become three or four more.</p>
+            {% endif %}
+        </section>
+
+        <section class="clay-card card-pad">
+            <div class="section-head"><h2>Writing assistant</h2><span class="ai-note">✦ {{ ai.provider }}</span></div>
+            <p class="section-note">{{ ai.hint }}</p>
+            <a class="btn ghost small" href="/assistant?action=hooks&subject={{ item.title|urlencode }}">Generate hooks for this piece</a>
+        </section>
+    </aside>
+</div>
+{% endblock %}

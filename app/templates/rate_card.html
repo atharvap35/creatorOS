@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Rate card{% endblock %}
+{% block page_id %}rate-card{% endblock %}
+{% block breadcrumb %}Rate card{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div><p class="eyebrow">Price with evidence</p><h1>Rate card</h1><p class="page-subtitle">What each deliverable costs you, with three price points so you can negotiate a range instead of a number.</p></div>
+    <div class="heading-actions"><a class="btn ghost small" href="/deals">Deals</a></div>
+</header>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>Your offers</h2><span class="section-note">{{ items|length }} item(s)</span></div>
+        {% if items %}
+        <div class="table-wrap"><table>
+            <thead><tr><th>Deliverable</th><th>Platform</th><th>Starting</th><th>Typical</th><th>Premium</th><th>Turnaround</th><th>Notes</th><th></th></tr></thead>
+            <tbody>{% for i in items %}<tr>
+                <td><strong>{{ i.name }}</strong></td>
+                <td>{{ i.platform }}</td>
+                <td>{{ money(i.starting_price) }}</td>
+                <td>{{ money(i.typical_price) }}</td>
+                <td>{{ money(i.premium_price) }}</td>
+                <td>{% if i.turnaround_days %}{{ i.turnaround_days }}d{% else %}—{% endif %}</td>
+                <td>{{ i.notes or "" }}</td>
+                <td><form action="/rate-card/{{ i.id }}/delete" method="post"><button class="btn ghost small danger" type="submit">×</button></form></td>
+            </tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">⌸</div>
+            <strong>No rate card yet</strong>
+            <p>Without a rate card, every deal conversation starts from zero. Three price points per deliverable is enough to begin.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>Add a deliverable</h2>
+        <p>Price the deliverable, not the audience size.</p>
+        <form class="form-stack" action="/rate-card" method="post">
+            <div class="field"><label for="rc-name">Deliverable</label>
+                <select id="rc-name" name="name">{% for f in formats %}<option value="{{ f }}">{{ f }}</option>{% endfor %}</select>
+            </div>
+            <div class="field"><label for="rc-platform">Platform</label><select id="rc-platform" name="platform"><option value="instagram">Instagram</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="x">X</option><option value="newsletter">Newsletter</option><option value="other">Other</option></select></div>
+            <div class="grid-2">
+                <div class="field"><label for="rc-start">Starting</label><input id="rc-start" name="starting_price" type="number" step="0.01" value="0"></div>
+                <div class="field"><label for="rc-typ">Typical</label><input id="rc-typ" name="typical_price" type="number" step="0.01" value="0"></div>
+            </div>
+            <div class="grid-2">
+                <div class="field"><label for="rc-prem">Premium</label><input id="rc-prem" name="premium_price" type="number" step="0.01" value="0"></div>
+                <div class="field"><label for="rc-turn">Turnaround (days)</label><input id="rc-turn" name="turnaround_days" type="number" min="0" placeholder="7"></div>
+            </div>
+            <div class="field"><label for="rc-notes">Notes</label><input id="rc-notes" name="notes" placeholder="Includes 2 revisions"></div>
+            <button class="btn" type="submit">Add to rate card</button>
+        </form>
+    </aside>
+</div>
+{% endblock %}

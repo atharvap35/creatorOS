@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Assistant{% endblock %}
+{% block page_id %}assistant{% endblock %}
+{% block breadcrumb %}Assistant{% endblock %}
+{% block content %}
+<header class="page-heading">
+    <div>
+        <p class="eyebrow">Draft, then edit</p>
+        <h1>Writing assistant</h1>
+        <p class="page-subtitle">Output is a draft. Nothing is saved to your content until you copy it there yourself.</p>
+    </div>
+    <div class="heading-actions"><span class="ai-note">✦ {{ status.provider }}</span></div>
+</header>
+
+<p class="section-note" style="margin-bottom:18px">{{ status.hint }}</p>
+
+<div class="page-layout">
+    <section class="clay-card card-pad">
+        <div class="section-head"><h2>{{ actions[action] }}</h2></div>
+        <form class="form-stack" action="/assistant" method="post">
+            <input type="hidden" name="action" value="{{ action }}">
+            <div class="field"><label for="a-subject">Subject</label><input id="a-subject" name="subject" value="{{ subject }}" placeholder="e.g. Why my content stopped growing"></div>
+            <div class="field"><label for="a-context">Extra context (optional)</label><textarea id="a-context" name="context_text" rows="6" placeholder="Paste a transcript, notes, or the background the writer should use."></textarea></div>
+            <div><button class="btn" type="submit">Generate draft</button></div>
+        </form>
+
+        {% if output %}
+        <div class="section-head" style="margin-top:26px">
+            <h2>Result</h2>
+            {% if failed %}<span class="badge critical">provider unavailable</span>{% endif %}
+        </div>
+        {% if failed %}
+        <p class="section-note">The configured provider could not be reached. Nothing was sent anywhere and nothing was saved.</p>
+        {% endif %}
+        <pre class="ai-output">{{ output }}</pre>
+        {% endif %}
+    </section>
+
+    <aside class="form-card clay-card">
+        <h2>What can it do</h2>
+        <div class="two-col-list">
+            {% for key, label in actions.items() %}
+            <div class="mini-row">
+                <div><strong>{{ label }}</strong><small>{{ key }}</small></div>
+                <a class="btn ghost small" href="/assistant?action={{ key }}">Open</a>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="section-note" style="margin-top:14px">With no API key set, the built-in writer works fully offline and always returns the same structure for the same request.</p>
+    </aside>
+</div>
+{% endblock %}

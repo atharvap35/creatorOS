@@ -17,7 +17,7 @@ Two guarantees hold for every endpoint in this file:
 import json
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -127,3 +127,63 @@ def run_named_action(
             )
     result = actions.run(db, user.id, slug, params)
     return _respond(request, user, result, fallback=next or "/today")
+
+
+def _summarise_buckets(buckets: dict) -> dict:
+    """Flatten a triage result into plain JSON.
+
+    `clear_slate` returns live ORM objects, which cannot be serialised and are
+    meaningless to a spoken answer anyway. What the caller needs is the label and
+    the reason, so those are the only things carried across.
+    """
+    plain = {}
+    for name, items in (buckets or {}).items():
+        rows = []
+        for item in items:
+            label = item.get("title")
+            if not label:
+                task = item.get("task")
+                label = getattr(task, "title", None) if task is not None else None
+            rows.append({"title": label or "(untitled)", "reason": item.get("reason", "")})
+        plain[name] = rows
+    return plain
+
+
+@router.post("/api/actions/run")
+def run_action_json(
+    request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+    slug: str = Form(...),
+    entity_id: str = Form(""),
+    entities: str = Form(""),
+):
+    """The same action dispatch, as JSON, for the voice layer.
+
+    This is not a second way to run an action — it calls `actions.run` with the
+    identical slug and parameters, so a spoken action can never do more than the
+    button that sits next to it. `user_id` comes from the session dependency, never
+    from the form, so this route is scoped to one account exactly as the HTML ones
+    are.
+    """
+    params = _collect(entity_id, entities)
+    if entity_id and not entities:
+        kind = SLUG_ENTITY.get(slug)
+        if kind:
+            params.setdefault(
+                f"{kind}_id", int(entity_id) if entity_id.lstrip("-").isdigit() else entity_id
+            )
+
+    result = actions.run(db, user.id, slug, params)
+    payload = {
+        "slug": slug,
+        "ok": bool(result.get("ok")),
+        "message": result.get("message", ""),
+        "url": result.get("url") or "",
+        "draft": result.get("draft") or "",
+        # A draft is text for the creator to review, so it is returned rather
+        # than summarised, and it is never saved by this route.
+        "buckets": _summarise_buckets(result.get("buckets")),
+    }
+    # An unknown slug is a bad request, not a server fault.
+    return JSONResponse(content=payload, status_code=200 if payload["ok"] else 400)

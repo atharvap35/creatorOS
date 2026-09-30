@@ -487,6 +487,68 @@ button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
 .toast { padding: 11px 15px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 11px; box-shadow: 0 10px 24px rgba(41, 44, 52, .25); animation: toast-in .18s ease; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+/* ================= Voice layer ================= */
+/* Sits above the quick-capture FAB, docked bottom-right like the rest of the
+   floating controls. Everything degrades to hidden when the browser has no
+   Web Speech support, because the dock is only mounted by voice.js. */
+.voice-dock { position: fixed; right: 26px; bottom: 92px; z-index: 55; display: grid; justify-items: end; gap: 10px; }
+.voice-buttons { display: flex; gap: 8px; align-items: center; }
+
+.voice-btn { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 16px; background: var(--surface); color: var(--purple-dark); box-shadow: var(--shadow-soft); cursor: pointer; transition: background .16s ease, transform .16s ease, color .16s ease; }
+.voice-btn:hover { transform: translateY(-2px); }
+.voice-btn[aria-pressed="true"] { background: var(--purple); color: #fff; }
+.voice-btn-small { width: 38px; height: 38px; border-radius: 13px; font-size: 14px; }
+
+.voice-mic { position: relative; width: 16px; height: 22px; border-radius: 8px 8px 6px 6px; background: currentColor; }
+.voice-mic::after { content: ""; position: absolute; left: 50%; bottom: -7px; width: 4px; height: 7px; border-radius: 0 0 2px 2px; background: currentColor; transform: translateX(-50%); }
+.voice-mic::before { content: ""; position: absolute; left: 50%; bottom: -8px; width: 16px; height: 12px; border: 2px solid currentColor; border-top: 0; border-radius: 0 0 12px 12px; transform: translateX(-50%); }
+
+/* listening state: a ring that pulses while the mic is open */
+.voice-listening .voice-mic { animation: voice-pulse 1.25s ease-in-out infinite; }
+.voice-listening .voice-btn { box-shadow: 0 0 0 4px var(--purple-soft), var(--shadow-soft); }
+@keyframes voice-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(.88); } }
+
+.voice-speaking .voice-btn-small[aria-pressed] { box-shadow: 0 0 0 3px var(--mint), var(--shadow-soft); }
+
+.voice-panel { width: min(340px, calc(100vw - 52px)); padding: 0; border-radius: 16px; background: var(--surface); box-shadow: 0 16px 40px rgba(41, 44, 52, .18); overflow: hidden; }
+.voice-panel:not(.is-open) { display: none; }
+.voice-body { margin: 0; padding: 12px 14px; color: var(--ink); font-size: 12px; line-height: 1.5; }
+.voice-body:empty { display: none; }
+.voice-body[data-kind="listening"] { color: var(--muted); font-style: italic; }
+.voice-body[data-kind="transcript"] { color: var(--purple-dark); font-weight: 600; }
+.voice-body[data-kind="pending"] { background: var(--yellow); }
+.voice-body[data-kind="error"] { background: var(--peach); color: #8a4a2c; }
+.voice-body[data-kind="status"] { color: var(--muted); }
+
+.voice-answer { padding: 12px 14px; border-top: 1px solid var(--line); }
+.voice-answer[hidden] { display: none; }
+.voice-answer p { margin: 6px 0; color: var(--ink); font-size: 12px; line-height: 1.55; }
+.voice-answer small { display: block; margin-bottom: 4px; color: var(--muted); font-size: 10px; }
+.voice-answer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.voice-answer-head strong { color: var(--purple-dark); font-size: 11px; text-transform: capitalize; }
+.basis-tag.warn { background: var(--peach); color: #8a4a2c; }
+
+.voice-confirm { display: flex; gap: 8px; padding: 0 14px 12px; }
+.voice-confirm[hidden] { display: none; }
+
+/* typing fallback, shown whenever voice input is unavailable or keeps failing */
+.voice-typebox { display: flex; gap: 8px; padding: 0 14px 12px; }
+.voice-typebox[hidden] { display: none; }
+.voice-typebox input { flex: 1; min-width: 0; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); color: var(--ink); font-size: 12px; outline: none; }
+.voice-typebox input:focus { border-color: var(--purple); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 800px) {
+    .voice-dock { right: 16px; bottom: 84px; }
+    .voice-panel { width: min(300px, calc(100vw - 32px)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .voice-listening .voice-mic { animation: none; }
+    .voice-btn { transition: none; }
+}
+
 /* ================= Today ================= */
 .hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
 .hero h1 { margin-bottom: 6px; }

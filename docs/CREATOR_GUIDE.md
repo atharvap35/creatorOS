@@ -44,7 +44,7 @@ so nothing you read below is a screenshot of an empty database.
 ![Register](screenshots/02-register.png)
 
 Once signed in you land on **Today**. Your workspace name sits in the sidebar
-(`USD workspace` in these captures — currency is per-account, see §17), and
+(`USD workspace` in these captures — currency is per-account, see §18), and
 `Ctrl K` opens search and the command palette from anywhere.
 
 ---
@@ -457,7 +457,58 @@ auto-saved.
 
 ---
 
-## 16. Actions: what "do it" actually does
+## 16. Voice
+
+The microphone button in the corner starts a voice command. Answers are read back to
+you, and everything works silently if you turn spoken replies off.
+
+![Voice](screenshots/50-voice-answer.png)
+
+**How it works.** One press opens one recognition session and holds it open. You
+speak, pause, and the command runs — the microphone is never reopened underneath you,
+so a long pause will not make it go quiet or lose what you said. In-progress words
+appear in the panel as they are heard, so you can tell the moment the mic is picking
+you up.
+
+**Say things like:**
+
+| Say | What happens |
+| --- | --- |
+| "what should I do" | Copilot answers from your own records |
+| "what am I forgetting" | Everything overdue or stalled |
+| "how much money am I waiting on" | Cash you are owed, and how overdue |
+| "clear my day" | Sorts today's work into must do / should do / can wait |
+| "rebalance my week" | Says whether you are over capacity, and what could move |
+| "plan my week" | Builds a week plan from your deadlines and working days |
+| "capture an idea about hook structures" | Saves an idea, after you confirm |
+| "remind me to email Acme" | Saves a task, after you confirm |
+| "go to money", "open deals" | Moves you there |
+| "search for Acme" | Searches everything |
+| "read this page" | Reads the page aloud |
+| "stop" | Cuts off the spoken reply |
+
+**Nothing changes without your say-so.** Anything that writes — capturing a task,
+planning your week — asks first and waits for "yes" or a click. Anything that only
+reads — clearing your day, checking your week — runs straight away, because it changes
+nothing.
+
+**The numbers you hear are yours.** Voice does not calculate, rank, or estimate. It
+calls the same handler the button beside it calls, and reads back what that handler
+returned. If the answer is not grounded in your records, it says so instead of
+guessing.
+
+**If the microphone does not hear you.** Voice input needs a secure connection — use
+`localhost` or `https`, not `http://` on a LAN address — and it needs permission for
+this site (padlock in the address bar → Microphone). Chrome also streams your audio to
+Google to transcribe it, so a proxy, VPN, or strict firewall will stop it working even
+when the microphone itself is fine. If it cannot hear you, a typing box appears in the
+panel so you are never stuck, and spoken output keeps working regardless.
+
+Firefox has no speech input; it will offer the typing box instead.
+
+---
+
+## 17. Actions: what "do it" actually does
 
 Buttons throughout the app are not decoration. They POST to `/action/{slug}` and run a
 real handler, which is either:
@@ -504,7 +555,7 @@ creator's record id fails rather than acting on it.
 
 ---
 
-## 17. Settings
+## 18. Settings
 
 ![Settings](screenshots/33-settings.png)
 
@@ -518,7 +569,7 @@ creator's record id fails rather than acting on it.
 
 ---
 
-## 18. Your first week, step by step
+## 19. Your first week, step by step
 
 A realistic order of operations for someone opening this for the first time.
 
@@ -559,7 +610,7 @@ stuck, Weekly review every Friday, Business review monthly.
 
 ---
 
-## 19. Screen reference
+## 20. Screen reference
 
 | Screen | Route | What it is for |
 | --- | --- | --- |
@@ -594,6 +645,7 @@ stuck, Weekly review every Friday, Business review monthly.
 | Assistant | `/assistant` | Offline writing tool |
 | Search | `/search` | Search and command palette |
 | Quick capture | `/quick` | Capture without leaving |
+| Voice | any page, via the microphone | Spoken commands and read-back answers |
 | Settings | `/settings` | Profile, currency, working rhythm |
 
 **Legacy URLs still work.** `/dashboard` → Today, `/tasks` → Workflow, `/revenue` →

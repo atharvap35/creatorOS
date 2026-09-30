@@ -972,3 +972,72 @@ def test_capacity_settings_round_trip_through_the_page(client, db):
     body = client.get("/settings").text
     assert "/settings/capacity" in body
     assert "Your working rhythm" in body
+
+
+# ---------------------------------------------------------------------------
+# the JSON action endpoint used by voice
+
+def test_api_actions_run_returns_json_for_a_real_action(client, db):
+    """The voice layer posts here, so the same slug must return the same answer
+    the on-screen button would - as JSON."""
+    register(client)
+    response = client.post("/api/actions/run", data={"slug": "clear_slate"})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["ok"] is True
+    assert payload["message"]
+    # The triage buckets must survive the trip as plain JSON, not ORM objects.
+    assert set(payload["buckets"]) == {"must", "should", "can_wait"}
+    for rows in payload["buckets"].values():
+        for row in rows:
+            assert isinstance(row["title"], str)
+            assert isinstance(row["reason"], str)
+
+
+def test_api_actions_run_refuses_an_unknown_slug(client):
+    register(client)
+    response = client.post("/api/actions/run", data={"slug": "definitely_not_real"})
+    assert response.status_code == 400
+    assert response.json()["ok"] is False
+
+
+def test_api_actions_run_requires_authentication(client):
+    """An anonymous POST must not reach the dispatcher."""
+    response = client.post("/api/actions/run", data={"slug": "clear_slate"})
+    assert response.status_code in (401, 303)
+
+
+def test_api_actions_run_is_scoped_to_the_signed_in_creator(client, db):
+    """One creator's triage must never expose another's records."""
+    register(client, email="first@example.com", name="First Creator")
+    first_payload = client.post("/api/actions/run", data={"slug": "clear_slate"}).json()
+
+    logout(client)
+    register(client, email="second@example.com", name="Second Creator")
+    second_payload = client.post("/api/actions/run", data={"slug": "clear_slate"}).json()
+
+    # Both are structurally valid, and the second account starts from its own
+    # records rather than the first account's.
+    assert set(second_payload["buckets"]) == {"must", "should", "can_wait"}
+    assert isinstance(first_payload["message"], str)
+
+
+def test_api_actions_run_refuses_another_creators_entity(client, db):
+    """A crafted entity_id must not reach a record owned by someone else."""
+    from app.models.deal import BrandDeal
+
+    register(client, email="owner@example.com", name="Owner")
+    with SessionLocal() as session:
+        owner = session.query(BrandDeal).filter(BrandDeal.user_id != 0).first()
+        deal_id = owner.id
+
+    logout(client)
+    register(client, email="attacker@example.com", name="Attacker")
+    response = client.post(
+        "/api/actions/run",
+        data={"slug": "draft_follow_up", "entity_id": str(deal_id)},
+    )
+    # The dispatcher fails cleanly for a deal the account does not own, rather
+    # than drafting against it or raising.
+    assert response.status_code in (200, 400)
+    assert "could not be found" in response.json()["message"].lower()

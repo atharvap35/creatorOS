@@ -6,7 +6,7 @@ changes a record without an explicit POST action.
 """
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -46,3 +46,31 @@ def ask(
         return RedirectResponse(url="/copilot", status_code=303)
     copilot.ask(db, user.id, question)
     return RedirectResponse(url="/copilot", status_code=303)
+
+
+@router.post("/api/copilot/ask")
+def ask_json(
+    request: Request,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+    question: str = Form(...),
+):
+    """The same grounded answer, as JSON, for the voice layer.
+
+    This is not a second way to get an answer — it calls `copilot.ask` and
+    returns exactly what the page would render, so a spoken answer can never
+    be more capable (or more inventive) than the typed one. It runs under the
+    same `get_current_user` dependency, so it is scoped to one account exactly
+    as the HTML route is.
+    """
+    result = copilot.ask(db, user.id, (question or "").strip())
+    return JSONResponse(
+        content={
+            "question": result.get("question", ""),
+            "answer": result.get("answer", ""),
+            "intent": result.get("intent", "unknown"),
+            "grounded": bool(result.get("grounded", False)),
+            "citations": result.get("citations", []) or [],
+            "actions": result.get("actions", []) or [],
+        }
+    )

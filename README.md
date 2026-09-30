@@ -82,6 +82,29 @@ Asked something it cannot know — an engagement rate, a follower count, a marke
 it refuses and explains why. Every exchange is stored with its intent, the records it
 cited, and whether it was grounded.
 
+### Voice
+
+The microphone button in the corner starts a voice command, on every screen. Answers
+are read back, and grounding is preserved: when the copilot refuses, the refusal is
+spoken too, so it is never mistaken for an answer. Speech input uses the browser Web
+Speech API, so it adds **no runtime dependency** and the product is fully usable
+without it — Firefox has no speech input and gets a typing box instead.
+
+One press opens **one** recognition session and holds it open, so a pause while you
+think cannot make the microphone reopen or lose what you said. The session is never
+restarted underneath you, which is what previously left the mic light on with no audio
+arriving.
+
+Speech is wired to the product's own actions, so a spoken command can never do more
+than the button beside it. `"clear my day"` and `"rebalance my week"` run the
+deterministic triage and capacity handlers — read-only, so they run immediately.
+`"plan my week"` writes a plan record and is confirmed first, as is any capture.
+Anything that writes asks and waits for a spoken or clicked yes.
+
+Voice posts to `/api/actions/run`, which dispatches the same slug as the on-screen
+button and takes `user_id` from the session, never the form. The numbers spoken back
+come from the same deterministic service that fills the page.
+
 ### Money on the table
 
 One ranked list of concrete, already-identified routes to money, each with a value, an
@@ -99,6 +122,10 @@ fails, the action reports the failure and **your data is unchanged**.
 ## Stack
 
 FastAPI · SQLAlchemy 2 · SQLite (Postgres-ready via `DATABASE_URL`) · Jinja2 · server-rendered HTML
+
+No frontend framework and no build step. Voice uses the browser's own Web Speech API, so
+it contributes no dependency and nothing to install — where the browser does not support
+it, the feature degrades to typing rather than failing.
 
 ## Setup
 
@@ -153,6 +180,19 @@ once; `copilot.ask` returns an intent, citations, and a `grounded` flag, and sto
 exchange. `actions.DISPATCH` maps a slug to a real mutation or a reviewable draft, and
 every handler scopes to the session's `user_id`.
 
+Voice talks to the product through exactly two JSON routes, both of which call the same
+service function as the corresponding HTML route and both scoped by the same
+`get_current_user` dependency:
+
+| Route | Calls | Purpose |
+| --- | --- | --- |
+| `POST /api/copilot/ask` | `copilot.ask` | A grounded answer as JSON |
+| `POST /api/actions/run` | `actions.run` | An action result as JSON |
+
+Neither is a second implementation. `actions.run` takes the same slug and parameters the
+button does and returns the same message the page would show, so a spoken answer can
+never be more capable — or more inventive — than the typed one.
+
 ## Security model
 
 - Passwords are hashed with PBKDF2-HMAC-SHA256 (stdlib) — plaintext is never stored.
@@ -163,11 +203,12 @@ every handler scopes to the session's `user_id`.
 
 ## Documentation
 
-[`docs/CREATOR_GUIDE.md`](docs/CREATOR_GUIDE.md) is the end-user walkthrough: 19 sections
-covering every screen, with 49 screenshots of the running application in
+[`docs/CREATOR_GUIDE.md`](docs/CREATOR_GUIDE.md) is the end-user walkthrough: 20 sections
+covering every screen, with 52 screenshots of the running application in
 `docs/screenshots/`. It includes a grounded copilot answer, an honest refusal, a proposed
-week awaiting acceptance, a generated follow-up draft, and 21 atoms extracted offline from
-a single published piece.
+week awaiting acceptance, a generated follow-up draft, 21 atoms extracted offline from
+a single published piece, and the voice dock listening, answering, refusing, and asking
+for confirmation before it changes anything.
 
 Regenerate it with a seeded demo workspace:
 
@@ -218,9 +259,9 @@ nonsensical capacity figure or a crash.
 pytest -q
 ```
 
-78 tests across three files, all passing (47m44s). The suite is slow by design: password
-hashing uses PBKDF2 at production cost, and each test rebuilds the whole schema. That cost
-is not lowered for test speed.
+98 tests across four files. The suite is slow by design: password hashing uses PBKDF2
+at production cost, and each test rebuilds the whole schema. That cost is not lowered
+for test speed.
 
 - `tests/test_dashboard.py` and `tests/test_creator_os.py` — the 2.0 contract, all 36
   tests, still passing unchanged: registration, auth, cross-account isolation and tamper
@@ -236,8 +277,28 @@ is not lowered for test speed.
   an action naming another creator's id fails; atomization never publishes and refuses
   cross-tenant content; reviews carry the full CEO structure and match the underlying
   rows; the timeline records each real mutation; the week planner proposes, accepts,
-  and dismisses without scheduling anything before acceptance; and capacity is computed
-  from the creator's own working rhythm rather than any hard-coded constant.
+  and dismisses without scheduling anything before acceptance; capacity is computed
+  from the creator's own working rhythm rather than any hard-coded constant; and the
+  JSON action endpoint voice posts to returns the same result as the button, refuses
+  unknown slugs, rejects anonymous callers, and stays scoped to one account.
+- `tests/test_voice_browser.py` — the voice dock in a real browser: one press opens
+  exactly one recognition session and it is never restarted, the microphone is released
+  when speech arrives, interim words appear live, `no-speech` offers the typing box
+  instead of looping, each command routes correctly, and the mutating verbs confirm
+  first. Speech recognition and `speechSynthesis` are read-only in Chromium, so the
+  tests redefine them with a stub that records every session constructed — which is what
+  makes a restart storm visible as a count instead of as a vague "it didn't work".
+
+  These need Playwright **and a server running on port 8078**:
+
+  ```bash
+  pip install playwright && playwright install chromium
+  python -m uvicorn app.main:app --port 8078
+  pytest tests/test_voice_browser.py -q
+  ```
+
+  Without Playwright installed the file skips itself, so the default `pytest -q` run
+  stays browser-free.
 
 ## Deployment
 

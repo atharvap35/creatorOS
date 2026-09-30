@@ -238,23 +238,35 @@ def revenue_summary(db: Session, user_id: int) -> dict:
 
 
 def revenue_by_source(db: Session, user_id: int) -> list:
+    """Revenue grouped by source.
+
+    Read positionally and labelled, for the same reason as
+    `insights.revenue_by_source`: an unlabelled `func.count` is named `count_1`
+    internally, so `r.count` returned a Row accessor method rather than a count.
+    """
     rows = (
-        db.query(Revenue.source, func.sum(Revenue.amount).label("total"), func.count(Revenue.id))
+        db.query(
+            Revenue.source,
+            func.sum(Revenue.amount).label("total"),
+            func.count(Revenue.id).label("entries"),
+        )
         .filter(Revenue.user_id == user_id, Revenue.status == RevenueStatus.received)
         .group_by(Revenue.source)
         .all()
     )
-    total = sum(r.total or 0 for r in rows) or 1
-    return [
-        {
-            "source": _val(r.source, "other"),
-            "total": r.total or 0,
-            "count": r.count,
-            "share": round((r.total or 0) / total * 100),
-            "basis": SYSTEM_DERIVED,
-        }
-        for r in sorted(rows, key=lambda r: r.total or 0, reverse=True)
-    ]
+    total = sum(row[1] or 0 for row in rows) or 1
+    result = []
+    for source, amount, entries in rows:
+        result.append(
+            {
+                "source": _val(source, "other"),
+                "total": amount or 0,
+                "count": entries,
+                "share": round((amount or 0) / total * 100),
+                "basis": SYSTEM_DERIVED,
+            }
+        )
+    return sorted(result, key=lambda r: r["total"], reverse=True)
 
 
 # ---------------------------------------------------------------------------

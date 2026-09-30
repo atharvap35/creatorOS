@@ -87,22 +87,37 @@ def revenue_totals(db: Session, user_id: int) -> dict:
 
 
 def revenue_by_source(db: Session, user_id: int) -> list:
+    """Revenue grouped by source, with each source's share of the total.
+
+    Every projected column is labelled and then read by position. SQLAlchemy
+    names an unlabelled `func.count(...)` internally (`count_1`), so reading it
+    as `row.count` silently fell through to a Row class-level accessor and
+    rendered a repr of a bound method in the UI instead of a count. Positional
+    reads make that class of bug impossible: a mis-sized result set raises
+    rather than quietly returning something that renders.
+    """
     rows = (
-        db.query(Revenue.source, func.sum(Revenue.amount).label("total"), func.count(Revenue.id))
+        db.query(
+            Revenue.source,
+            func.sum(Revenue.amount).label("total"),
+            func.count(Revenue.id).label("entries"),
+        )
         .filter(Revenue.user_id == user_id, Revenue.status == RevenueStatus.received)
         .group_by(Revenue.source)
         .all()
     )
-    total = sum(row.total or 0 for row in rows) or 1
-    return [
-        {
-            "source": row.source.value if hasattr(row.source, "value") else str(row.source),
-            "total": row.total or 0,
-            "count": row.count,
-            "share": round((row.total or 0) / total * 100),
-        }
-        for row in sorted(rows, key=lambda r: r.total or 0, reverse=True)
-    ]
+    total = sum(row[1] or 0 for row in rows) or 1
+    result = []
+    for source, amount, entries in rows:
+        result.append(
+            {
+                "source": source.value if hasattr(source, "value") else str(source),
+                "total": amount or 0,
+                "count": entries,
+                "share": round((amount or 0) / total * 100),
+            }
+        )
+    return sorted(result, key=lambda r: r["total"], reverse=True)
 
 
 def payments_owed(db: Session, user_id: int) -> list:

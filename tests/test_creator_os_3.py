@@ -7,6 +7,7 @@ suite stays valid when the seed changes.
 """
 
 import json
+from datetime import datetime
 import os
 import sys
 
@@ -23,11 +24,11 @@ from app.models.content import ContentItem, Status
 from app.models.business import Brand, CopilotMessage, Offer
 from app.models.deal import BrandDeal, PaymentStatus
 from app.models.idea import Idea
-from app.models.revenue import Revenue, RevenueStatus
+from app.models.revenue import Revenue, RevenueSource, RevenueStatus
 from app.models.task import Task, TaskStatus
 from app.security import SESSION_COOKIE_NAME
 from app.models.business import ActivityEvent, StageEvent, WeekPlan
-from app.services import actions, attention, brain, copilot, reviews
+from app.services import actions, attention, brain, copilot, insights, reviews
 from app.services.seed import seed_db
 
 
@@ -1041,3 +1042,60 @@ def test_api_actions_run_refuses_another_creators_entity(client, db):
     # than drafting against it or raising.
     assert response.status_code in (200, 400)
     assert "could not be found" in response.json()["message"].lower()
+
+
+# ---------------------------------------------------------------------------
+# aggregates must not leak a SQLAlchemy accessor into the page
+
+def test_revenue_by_source_returns_a_real_count(client, db):
+    """Regression: an unlabelled `func.count` is named `count_1` internally, so
+    reading it as `row.count` fell through to a Row class-level accessor and
+    rendered a repr of a bound method in the UI - literally
+    "Sponsorship (<function Row._special_name_accessor...>)" - instead of a count.
+    """
+    register(client)
+    uid = creator_id(db)
+    db.add(Revenue(
+        user_id=uid, source=RevenueSource.sponsorship, description="Test",
+        amount=100.0, currency="USD", date=datetime(2026, 1, 5),
+        status=RevenueStatus.received, invoiced=True,
+    ))
+    db.commit()
+
+    for label, groups in (
+        ("insights", insights.revenue_by_source(db, uid)),
+        ("brain", brain.revenue_by_source(db, uid)),
+    ):
+        assert groups, f"{label} returned no groups"
+        for group in groups:
+            # The values must be real data, never an internal object.
+            assert isinstance(group["count"], int), f"{label}: count is {group['count']!r}"
+            assert isinstance(group["total"], (int, float))
+            assert isinstance(group["share"], (int, float))
+            assert isinstance(group["source"], str)
+            rendered = f"{group['source']} ({group['count']})"
+            assert "function" not in rendered and "0x" not in rendered, rendered
+
+
+def test_revenue_source_mix_sums_to_a_full_share(client, db):
+    # An empty creator, so the only sources are the two added here - `register`
+    # seeds a realistic workspace and would already contain several.
+    register_empty(client, db, email="mix@example.com", name="Mix Creator")
+    uid = creator_id(db, "mix@example.com")
+    for src, amount in (("sponsorship", 300.0), ("services", 100.0)):
+        db.add(Revenue(
+            user_id=uid, source=RevenueSource(src), description=src,
+            amount=amount, currency="USD", date=datetime(2026, 1, 5),
+            status=RevenueStatus.received, invoiced=True,
+        ))
+    db.commit()
+
+    groups = insights.revenue_by_source(db, uid)
+    assert len(groups) == 2
+    # Sorted by total, biggest first.
+    assert [g["source"] for g in groups] == ["sponsorship", "services"]
+    assert groups[0]["total"] == 300.0 and groups[0]["count"] == 1
+    assert groups[0]["share"] == 75 and groups[1]["share"] == 25
+    assert sum(g["share"] for g in groups) == 100
+    # No group's count may be anything other than a real integer.
+    assert all(isinstance(g["count"], int) for g in groups)
